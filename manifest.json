@@ -1,0 +1,19 @@
+{
+  "manifest_version": 2,
+  "name": "__MSG_appName__",
+  "description": "__MSG_appDescription__",
+  "version": "1.0.0",
+  "default_locale": "en",
+  "permissions": [
+    "identity",
+    "fileSystemProvider",
+    "storage",
+    "https://api.dropbox.com/",
+    "https://api-content.dropbox.com/"
+  ],
+  "app": {
+    "background": {
+      "scripts": ["bower_components/jquery/dist/jquery.min.js", "dropbox_client.js", "dropbox_fs.js", "background.js"]
+    }
+  }
+}

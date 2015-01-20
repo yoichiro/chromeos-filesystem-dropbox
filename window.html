@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+
+  <title data-message="mountHeader"></title>
+
+  <script type="text/javascript" src="bower_components/jquery/dist/jquery.min.js"></script>
+
+  <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
+  <link rel="import" href="bower_components/paper-toast/paper-toast.html">
+  <link rel="import" href="bower_components/paper-button/paper-button.html">
+
+  <script type="text/javascript" src="dropbox_client.js"></script>
+  <script type="text/javascript" src="dropbox_fs.js"></script>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <paper-toast data-message="mountAttempt" id="toast-mount-attempt"></paper-toast>
+  <paper-toast data-message="mountFail" id="toast-mount-fail"></paper-toast>
+  <paper-toast data-message="mountSuccess" id="toast-mount-success"></paper-toast>
+
+  <div class="container">
+    <h1 data-message="mountHeader"></h1>
+
+    <form>
+      <paper-button raisedButton id="btnMount" data-message="mount"></paper-button>
+    </form>
+  </div>
+
+  <script type="text/javascript" src="window.js"></script>
+
+</body>
+
+</html>

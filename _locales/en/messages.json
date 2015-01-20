@@ -1,0 +1,30 @@
+{
+  "appName": {
+    "message": "DropboxFS for Chrome OS",
+    "description": "Application name"
+  },
+  "appDescription": {
+    "message": "This application provides File System for your Dropbox storage.",
+    "description": "Application description"
+  },
+  "mountHeader": {
+    "message": "Mount your Dropbox",
+    "description": "Header describing the server mount form."
+  },
+  "mount": {
+    "message": "Mount",
+    "description": "Label for a button that triggers the mount action."
+  },
+  "mountAttempt": {
+    "message": "Attempting to mount instance...",
+    "description": "Popup notifcation that informs the user that the system is attempting to mount a new instance with the credentials they provided."
+  },
+  "mountSuccess": {
+    "message": "Mounted successfully.",
+    "description": "Popup notifcation that informs the user that the system successfully mounted a new instance with the credentials they provided."
+  },
+  "mountFail": {
+    "message": "Failed to mount.",
+    "description": "Popup notifcation that informs the user that the system failed to mount a new instance with the credentials they provided."
+  }
+}
