@@ -4,7 +4,7 @@
 
   var AUTH_URL = "https://www.dropbox.com/1/oauth2/authorize" +
       "?response_type=token&client_id=u4emlzpeiilp7n0" +
-      "&redirect_uri=https://opagnbkofneljidgmnmjpepdpmhjlpge.chromiumapp.org/";
+      "&redirect_uri=https://gdacnmpeheenhnpchfkklcaciaogkoap.chromiumapp.org/";
 
   var CHUNK_SIZE = 1024 * 1024 * 4; // 4MB
 
@@ -12,6 +12,7 @@
 
   var DropboxClient = function() {
     this.access_token_ = null;
+    this.writeRequestMap = {};
     initializeJQueryAjaxBinaryHandler.call(this);
   };
 
@@ -23,19 +24,24 @@
       "url": AUTH_URL,
       "interactive": true
     }, function(redirectUrl) {
-      var parametersStr = redirectUrl.substring(redirectUrl.indexOf("#") + 1);
-      var parameters = parametersStr.split("&");
-      for (var i = 0; i < parameters.length; i++) {
-        var parameter = parameters[i];
-        var kv = parameter.split("=");
-        if (kv[0] === "access_token") {
-          this.access_token_ = kv[1];
+      console.log(redirectUrl);
+      if (redirectUrl) {
+        var parametersStr = redirectUrl.substring(redirectUrl.indexOf("#") + 1);
+        var parameters = parametersStr.split("&");
+        for (var i = 0; i < parameters.length; i++) {
+          var parameter = parameters[i];
+          var kv = parameter.split("=");
+          if (kv[0] === "access_token") {
+            this.access_token_ = kv[1];
+          }
         }
-      }
-      if (this.access_token_) {
-        successCallback();
+        if (this.access_token_) {
+          successCallback();
+        } else {
+          errorCallback("Issuing Access token failed");
+        }
       } else {
-        errorCallback("Issuing Access token failed");
+        errorCallback("Authorization failed");
       }
     }.bind(this));
   };
@@ -129,12 +135,39 @@
     }.bind(this));
   };
 
-  DropboxClient.prototype.openFile = function(filePath, successCallback, errorCallback) {
+  DropboxClient.prototype.openFile = function(filePath, requestId, mode, successCallback, errorCallback) {
+    this.writeRequestMap[requestId] = {
+      mode: mode
+    }
     successCallback();
   };
 
-  DropboxClient.prototype.closeFile = function(filePath, successCallback) {
-    successCallback();
+  DropboxClient.prototype.closeFile = function(filePath, openRequestId, successCallback) {
+    var writeRequest = this.writeRequestMap[openRequestId];
+    if (writeRequest && writeRequest.mode === "WRITE") {
+      var uploadId = writeRequest.uploadId;
+      if (uploadId) {
+        $.ajax({
+          type: "POST",
+          url: "https://api-content.dropbox.com/1/commit_chunked_upload/auto" + filePath,
+          data: {
+            "upload_id": uploadId
+          },
+          headers: {
+            "Authorization": "Bearer " + this.access_token_
+          },
+          dataType: "json"
+        }).done(function(result) {
+          successCallback();
+        }.bind(this)).fail(function(error) {
+          errorCallback("FAILED");
+        }.bind(this));
+      } else {
+        successCallback();
+      }
+    } else {
+      successCallback();
+    }
   };
 
   DropboxClient.prototype.readFile = function(filePath, offset, length, successCallback, errorCallback) {
@@ -260,8 +293,20 @@
     }.bind(this));
   };
 
-  DropboxClient.prototype.writeFile = function(filePath, data, offset, successCallback, errorCallback) {
-    sendContents.call(this, filePath, data, 0, null, true, successCallback, errorCallback);
+  DropboxClient.prototype.writeFile = function(filePath, data, offset, openRequestId, successCallback, errorCallback) {
+    var writeRequest = this.writeRequestMap[openRequestId];
+    var uploadId = writeRequest.uploadId || null;
+    var req = {
+      filePath: filePath,
+      data: data,
+      offset: offset,
+      sentBytes: 0,
+      uploadId: uploadId,
+      hasMore: true,
+      needCommit: false,
+      openRequestId: openRequestId
+    };
+    sendContents.call(this, req, successCallback, errorCallback);
   };
 
   DropboxClient.prototype.truncate = function(filePath, length, successCallback, errorCallback) {
@@ -276,14 +321,34 @@
     }).done(function(data) {
       if (length < data.byteLength) {
         // Truncate
-        sendContents.call(this, filePath, data.slice(0, length), 0, null, true, successCallback, errorCallback);
+        var req = {
+          filePath: filePath,
+          data: data.slice(0, length),
+          offset: 0,
+          sentBytes: 0,
+          uploadId: null,
+          hasMore: true,
+          needCommit: true,
+          openRequestId: null
+        };
+        sendContents.call(this, req, successCallback, errorCallback);
       } else {
         // Pad with null bytes.
         var diff = length - data.byteLength;
         var blob = new Blob([data, new Array(diff + 1).join('\0')]);
         var reader = new FileReader();
         reader.addEventListener("loadend", function() {
-          sendContents.call(this, filePath, reader.result, 0, null, true, successCallback, errorCallback);
+          var req = {
+            filePath: filePath,
+            data: reader.result,
+            offset: 0,
+            sentBytes: 0,
+            uploadId: null,
+            hasMore: true,
+            needCommit: true,
+            openRequestId: null
+          };
+          sendContents.call(this, req, successCallback, errorCallback);
         }.bind(this));
         reader.readAsArrayBuffer(blob);
       }
@@ -295,34 +360,36 @@
 
   // Private functions
 
-  var sendContents = function(filePath, data, offset, uploadId, hasMore, successCallback, errorCallback) {
-    if (!hasMore) {
-      $.ajax({
-        type: "POST",
-        url: "https://api-content.dropbox.com/1/commit_chunked_upload/auto" + filePath,
-        data: {
-          "upload_id": uploadId
-        },
-        headers: {
-          "Authorization": "Bearer " + this.access_token_
-        },
-        dataType: "json"
-      }).done(function(result) {
-        console.log(result);
+  var sendContents = function(options, successCallback, errorCallback) {
+    if (!options.hasMore) {
+      if (options.needCommit) {
+        $.ajax({
+          type: "POST",
+          url: "https://api-content.dropbox.com/1/commit_chunked_upload/auto" + options.filePath,
+          data: {
+            "upload_id": options.uploadId
+          },
+          headers: {
+            "Authorization": "Bearer " + this.access_token_
+          },
+          dataType: "json"
+        }).done(function(result) {
+          successCallback();
+        }.bind(this)).fail(function(error) {
+          errorCallback("FAILED");
+        }.bind(this));
+      } else {
         successCallback();
-      }.bind(this), function(error) {
-        console.log(error);
-        errorCallback("FAILED");
-      }.bind(this));
+      }
     } else {
-      var len = data.byteLength;
-      var remains = len - offset;
+      var len = options.data.byteLength;
+      var remains = len - options.sentBytes;
       var sendLength = Math.min(CHUNK_SIZE, remains);
-      var more = (offset + sendLength) < len;
-      var sendBuffer = data.slice(offset, sendLength);
-      var queryParam = "?offset=" + offset;
-      if (uploadId) {
-        queryParam += "&upload_id=" + uploadId;
+      var more = (options.sentBytes + sendLength) < len;
+      var sendBuffer = options.data.slice(options.sentBytes, sendLength);
+      var queryParam = "?offset=" + options.offset;
+      if (options.uploadId) {
+        queryParam += "&upload_id=" + options.uploadId;
       }
       $.ajax({
         type: "PUT",
@@ -334,9 +401,22 @@
         processData: false,
         data: sendBuffer
       }).done(function(result) {
-        sendContents.call(
-          this, filePath, data, offset + sendLength, result.upload_id, more, successCallback, errorCallback);
-      }.bind(this), function(error) {
+        var writeRequest = this.writeRequestMap[options.openRequestId];
+        if (writeRequest) {
+          writeRequest.uploadId = result.upload_id
+        }
+        var req = {
+          filePath: options.filePath,
+          data: options.data,
+          offset: options.offset + sendLength,
+          sentBytes: options.sendBytes + sendLength,
+          uploadId: result.upload_id,
+          hasMore: more,
+          needCommit: options.needCommit,
+          openRequestId: options.openRequestId
+        };
+        sendContents.call(this, req, successCallback, errorCallback);
+      }.bind(this)).fail(function(error) {
         errorCallback("FAILED");
       }.bind(this));
     }

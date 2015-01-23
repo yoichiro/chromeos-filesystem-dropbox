@@ -20,7 +20,6 @@
       type: "mount"
     };
     chrome.runtime.sendMessage(request, function(response) {
-      console.log(response);
       if (response.success) {
         document.getElementById("toast-mount-success").show();
         window.setTimeout(function() {
@@ -29,7 +28,7 @@
       } else {
         var toast = document.getElementById("toast-mount-fail");
         if (response.error) {
-          toast.setAttribute("text", error);
+          toast.setAttribute("text", response.error);
         }
         toast.show();
         btnMount.removeAttribute("disabled");

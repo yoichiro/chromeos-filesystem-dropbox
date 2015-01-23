@@ -96,7 +96,7 @@
   DropboxFS.prototype.onOpenFileRequested = function(options, successCallback, errorCallback) {
     console.log("onOpenFileRequested");
     console.log(options);
-    this.dropbox_client_.openFile(options.filePath, function() {
+    this.dropbox_client_.openFile(options.filePath, options.requestId, options.mode, function() {
       this.opened_files_[options.requestId] = options.filePath;
       successCallback();
     }.bind(this), errorCallback);
@@ -116,7 +116,7 @@
   DropboxFS.prototype.onCloseFileRequested = function(options, successCallback, errorCallback) {
     console.log("onCloseFileRequested");
     var filePath = this.opened_files_[options.openRequestId];
-    this.dropbox_client_.closeFile(filePath, function() {
+    this.dropbox_client_.closeFile(filePath, options.openRequestId, function() {
       delete this.opened_files_[options.openRequestId];
       successCallback();
     }.bind(this));
@@ -158,7 +158,7 @@
     console.log("onWriteFileRequested");
     console.log(options);
     var filePath = this.opened_files_[options.openRequestId];
-    this.dropbox_client_.writeFile(filePath, options.data, options.offset, function() {
+    this.dropbox_client_.writeFile(filePath, options.data, options.offset, options.openRequestId, function() {
       successCallback();
     }.bind(this), errorCallback);
   };
@@ -168,7 +168,8 @@
     console.log(options);
     this.dropbox_client_.truncate(options.filePath, options.length, function() {
       console.log("onTruncateRequested - done");
-      successCallback();
+      console.log(successCallback);
+      successCallback(false);
     }.bind(this), errorCallback);
   };
 
