@@ -27,7 +27,7 @@
       if (mounted) {
         errorCallback("ALREADY_MOUNTED");
       } else {
-        this.dropbox_client_ = new DropboxClient();
+        this.dropbox_client_ = new DropboxClient(this);
         this.dropbox_client_.authorize(function() {
           chrome.fileSystemProvider.mount({
             fileSystemId: FILE_SYSTEM_ID,
@@ -73,12 +73,7 @@
   };
 
   DropboxFS.prototype.onUnmountRequested = function(options, successCallback, errorCallback) {
-    this.dropbox_client_.unauthorize(function() {
-      doUnmount.call(this, successCallback);
-    }.bind(this), function(reason) {
-      console.log(reason);
-      doUnmount.call(this, successCallback);
-    }.bind(this));
+    this.doUnmount(successCallback);
   };
 
   DropboxFS.prototype.onReadDirectoryRequested = function(options, successCallback, errorCallback) {
@@ -185,6 +180,24 @@
     }.bind(this), errorCallback);
   };
 
+  DropboxFS.prototype.doUnmount = function(successCallback) {
+    var unmount = function() {
+      chrome.fileSystemProvider.unmount({
+        fileSystemId: FILE_SYSTEM_ID
+      }, function() {
+        chrome.storage.local.remove("accessToken", function() {
+          successCallback();
+        });
+      }.bind(this));
+    };
+    this.dropbox_client_.unauthorize(function() {
+      unmount(successCallback);
+    }.bind(this), function(reason) {
+      console.log(reason);
+      unmount(successCallback);
+    }.bind(this));
+  };
+
   // Private functions
 
   var createEventHandler = function(callback) {
@@ -283,17 +296,6 @@
         }.bind(this)));
     console.log("End: assignEventHandlers");
   };
-
-  var doUnmount = function(successCallback) {
-    chrome.fileSystemProvider.unmount({
-      fileSystemId: FILE_SYSTEM_ID
-    }, function() {
-      chrome.storage.local.remove("accessToken", function() {
-        successCallback();
-      });
-    }.bind(this));
-  };
-
 
   // Export
 

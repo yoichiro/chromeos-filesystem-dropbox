@@ -10,7 +10,8 @@
 
   // Constructor
 
-  var DropboxClient = function() {
+  var DropboxClient = function(dropboxFS) {
+    this.dropbox_fs_ = dropboxFS;
     this.access_token_ = null;
     this.writeRequestMap = {};
     initializeJQueryAjaxBinaryHandler.call(this);
@@ -70,6 +71,9 @@
           this.access_token_ = null;
           successCallback();
         }.bind(this));
+      }.bind(this)).fail(function(error) {
+        console.log(error);
+        errorCallback(error);
       }.bind(this));
     } else {
       errorCallback("Not authorized");
@@ -359,6 +363,18 @@
       errorCallback("NOT_FOUND");
     } else if (status === 416) {
       successCallback(new ArrayBuffer(), false);
+    } else if (status === 401) {
+      // Access token has already expired or unauthorized. Unmount.
+      this.dropbox_fs_.doUnmount(function() {
+        errorCallback("INVALID_OPERATION");
+        chrome.notifications.create("", {
+          type: "basic",
+          title: "Dropbox File System",
+          message: "The access token has been expired. File system unmounted.",
+          iconUrl: "icons/48.png"
+        }, function(notificationId) {
+        }.bind(this));
+      }.bind(this));
     } else {
       errorCallback("FAILED");
     }
