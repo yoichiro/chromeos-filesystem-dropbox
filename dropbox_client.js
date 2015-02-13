@@ -25,7 +25,10 @@
       "url": AUTH_URL,
       "interactive": true
     }, function(redirectUrl) {
-      console.log(redirectUrl);
+      if (chrome.runtime.lastError) {
+        errorCallback(chrome.runtime.lastError.message);
+        return;
+      }
       if (redirectUrl) {
         var parametersStr = redirectUrl.substring(redirectUrl.indexOf("#") + 1);
         var parameters = parametersStr.split("&");
