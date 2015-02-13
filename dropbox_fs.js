@@ -167,7 +167,6 @@
     console.log(options);
     this.dropbox_client_.truncate(options.filePath, options.length, function() {
       console.log("onTruncateRequested - done");
-      console.log(successCallback);
       successCallback(false);
     }.bind(this), errorCallback);
   };
@@ -279,6 +278,7 @@
         }.bind(this)));
     chrome.fileSystemProvider.onWriteFileRequested.addListener(
       createEventHandler.call(
+        this,
         function(options, successCallback, errorCallback) {
           this.onWriteFileRequested(options, successCallback, errorCallback);
         }.bind(this)));
