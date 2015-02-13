@@ -8,6 +8,7 @@
     "identity",
     "fileSystemProvider",
     "storage",
+    "notifications",
     "https://api.dropbox.com/",
     "https://api-content.dropbox.com/"
   ],
