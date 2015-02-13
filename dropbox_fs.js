@@ -56,16 +56,20 @@
   };
 
   DropboxFS.prototype.resume = function(successCallback, errorCallback) {
-    chrome.storage.local.get("accessToken", function(items) {
-      var accessToken = items.accessToken;
-      if (accessToken) {
-        this.dropbox_client_ = new DropboxClient();
-        this.dropbox_client_.setAccessToken(accessToken);
-        successCallback();
-      } else {
-        errorCallback("ACCESS_TOKEN_NOT_FOUND");
-      }
-    }.bind(this));
+    if (!this.dropbox_client_) {
+      chrome.storage.local.get("accessToken", function(items) {
+        var accessToken = items.accessToken;
+        if (accessToken) {
+          this.dropbox_client_ = new DropboxClient();
+          this.dropbox_client_.setAccessToken(accessToken);
+          successCallback();
+        } else {
+          errorCallback("ACCESS_TOKEN_NOT_FOUND");
+        }
+      }.bind(this));
+    } else {
+      successCallback();
+    }
   };
 
   DropboxFS.prototype.onUnmountRequested = function(options, successCallback, errorCallback) {
@@ -183,59 +187,101 @@
 
   // Private functions
 
+  var createEventHandler = function(callback) {
+    return function(options, successCallback, errorCallback) {
+      if (!this.dropbox_client_) {
+        this.resume(function() {
+          callback(options, successCallback, errorCallback);
+        }.bind(this), function(reason) {
+          console.log("resume failed");
+          errorCallback("FAILED");
+        }.bind(this));
+      } else {
+        callback(options, successCallback, errorCallback);
+      }
+    }.bind(this);
+  };
+
   var assignEventHandlers = function() {
+    console.log("Start: assignEventHandlers");
     chrome.fileSystemProvider.onUnmountRequested.addListener(
-      function(options, successCallback, errorCallback) {
-        this.onUnmountRequested(options, successCallback, errorCallback);
-      }.bind(this));
+      createEventHandler.call(
+        this,
+        function(options, successCallback, errorCallback) {
+          this.onUnmountRequested(options, successCallback, errorCallback);
+        }.bind(this)));
     chrome.fileSystemProvider.onReadDirectoryRequested.addListener(
-      function(options, successCallback, errorCallback) {
-        this.onReadDirectoryRequested(options, successCallback, errorCallback);
-      }.bind(this));
+      createEventHandler.call(
+        this,
+        function(options, successCallback, errorCallback) {
+          this.onReadDirectoryRequested(options, successCallback, errorCallback);
+        }.bind(this)));
     chrome.fileSystemProvider.onGetMetadataRequested.addListener(
-      function(options, successCallback, errorCallback) {
-        this.onGetMetadataRequested(options, successCallback, errorCallback);
-      }.bind(this));
+      createEventHandler.call(
+        this,
+        function(options, successCallback, errorCallback) {
+          this.onGetMetadataRequested(options, successCallback, errorCallback);
+        }.bind(this)));
     chrome.fileSystemProvider.onOpenFileRequested.addListener(
-      function(options, successCallback, errorCallback) {
-        this.onOpenFileRequested(options, successCallback, errorCallback);
-      }.bind(this));
+      createEventHandler.call(
+        this,
+        function(options, successCallback, errorCallback) {
+          this.onOpenFileRequested(options, successCallback, errorCallback);
+        }.bind(this)));
     chrome.fileSystemProvider.onReadFileRequested.addListener(
-      function(options, successCallback, errorCallback) {
-        this.onReadFileRequested(options, successCallback, errorCallback);
-      }.bind(this));
+      createEventHandler.call(
+        this,
+        function(options, successCallback, errorCallback) {
+          this.onReadFileRequested(options, successCallback, errorCallback);
+        }.bind(this)));
     chrome.fileSystemProvider.onCloseFileRequested.addListener(
-      function(options, successCallback, errorCallback) {
-        this.onCloseFileRequested(options, successCallback, errorCallback);
-      }.bind(this));
+      createEventHandler.call(
+        this,
+        function(options, successCallback, errorCallback) {
+          this.onCloseFileRequested(options, successCallback, errorCallback);
+        }.bind(this)));
     chrome.fileSystemProvider.onCreateDirectoryRequested.addListener(
-      function(options, successCallback, errorCallback) {
-        this.onCreateDirectoryRequested(options, successCallback, errorCallback);
-      }.bind(this));
+      createEventHandler.call(
+        this,
+        function(options, successCallback, errorCallback) {
+          this.onCreateDirectoryRequested(options, successCallback, errorCallback);
+        }.bind(this)));
     chrome.fileSystemProvider.onDeleteEntryRequested.addListener(
-      function(options, successCallback, errorCallback) {
-        this.onDeleteEntryRequested(options, successCallback, errorCallback);
-      }.bind(this));
+      createEventHandler.call(
+        this,
+        function(options, successCallback, errorCallback) {
+          this.onDeleteEntryRequested(options, successCallback, errorCallback);
+        }.bind(this)));
     chrome.fileSystemProvider.onMoveEntryRequested.addListener(
-      function(options, successCallback, errorCallback) {
-        this.onMoveEntryRequested(options, successCallback, errorCallback);
-      }.bind(this));
+      createEventHandler.call(
+        this,
+        function(options, successCallback, errorCallback) {
+          this.onMoveEntryRequested(options, successCallback, errorCallback);
+        }.bind(this)));
     chrome.fileSystemProvider.onCopyEntryRequested.addListener(
-      function(options, successCallback, errorCallback) {
-        this.onCopyEntryRequested(options, successCallback, errorCallback);
-      }.bind(this));
+      createEventHandler.call(
+        this,
+        function(options, successCallback, errorCallback) {
+          this.onCopyEntryRequested(options, successCallback, errorCallback);
+        }.bind(this)));
     chrome.fileSystemProvider.onWriteFileRequested.addListener(
-      function(options, successCallback, errorCallback) {
-        this.onWriteFileRequested(options, successCallback, errorCallback);
-      }.bind(this));
+      createEventHandler.call(
+        function(options, successCallback, errorCallback) {
+          this.onWriteFileRequested(options, successCallback, errorCallback);
+        }.bind(this)));
     chrome.fileSystemProvider.onTruncateRequested.addListener(
-      function(options, successCallback, errorCallback) {
-        this.onTruncateRequested(options, successCallback, errorCallback);
-      }.bind(this));
+      createEventHandler.call(
+        this,
+        function(options, successCallback, errorCallback) {
+          this.onTruncateRequested(options, successCallback, errorCallback);
+        }.bind(this)));
     chrome.fileSystemProvider.onCreateFileRequested.addListener(
-      function(options, successCallback, errorCallback) {
-        this.onCreateFileRequested(options, successCallback, errorCallback);
-      }.bind(this));
+      createEventHandler.call(
+        this,
+        function(options, successCallback, errorCallback) {
+          this.onCreateFileRequested(options, successCallback, errorCallback);
+        }.bind(this)));
+    console.log("End: assignEventHandlers");
   };
 
   var doUnmount = function(successCallback) {
