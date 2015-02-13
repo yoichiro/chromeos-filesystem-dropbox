@@ -85,53 +85,56 @@
       },
       dataType: "json"
     }).done(function(result) {
-      if (needThumbnail && result.thumb_exists) {
-        fetchThumbnail.call(this, path, function(thumbnail) {
+      if (result.is_deleted) {
+        errorCallback("NOT_FOUND");
+      } else {
+        if (needThumbnail && result.thumb_exists) {
+          fetchThumbnail.call(this, path, function(thumbnail) {
+            var entryMetadata = {
+              isDirectory: result.is_dir,
+              name: getNameFromPath.call(this, result.path),
+              size: result.bytes,
+              modificationTime: result.modified ? new Date(result.modified) : new Date(),
+              thumbnail: thumbnail
+            };
+            if (!result.is_dir) {
+              entryMetadata.mimeType = result.mime_type;
+            }
+            successCallback(entryMetadata);
+          }.bind(this), errorCallback);
+        } else {
           var entryMetadata = {
             isDirectory: result.is_dir,
             name: getNameFromPath.call(this, result.path),
             size: result.bytes,
-            modificationTime: result.modified ? new Date(result.modified) : new Date(),
-            thumbnail: thumbnail
+            modificationTime: result.modified ? new Date(result.modified) : new Date()
           };
           if (!result.is_dir) {
             entryMetadata.mimeType = result.mime_type;
           }
           successCallback(entryMetadata);
-        }.bind(this), errorCallback);
-      } else {
-        var entryMetadata = {
-          isDirectory: result.is_dir,
-          name: getNameFromPath.call(this, result.path),
-          size: result.bytes,
-          modificationTime: result.modified ? new Date(result.modified) : new Date()
-        };
-        if (!result.is_dir) {
-          entryMetadata.mimeType = result.mime_type;
         }
-        successCallback(entryMetadata);
       }
     }.bind(this)).fail(function(error) {
-      console.log(error);
-      if (error.status === 404) {
-        errorCallback("NOT_FOUND");
-      } else {
-        errorCallback("FAILED");
-      }
+      handleError.call(this, error, successCallback, errorCallback);
     }.bind(this));
   };
 
   DropboxClient.prototype.readDirectory = function(path, successCallback, errorCallback) {
     $.ajax({
       type: "GET",
-      url: "https://api.dropbox.com/1/metadata/auto" + path + "?list=true",
+      url: "https://api.dropbox.com/1/metadata/auto" + path + "?list=true&include_deleted=false",
       headers: {
         "Authorization": "Bearer " + this.access_token_
       },
       dataType: "json"
     }).done(function(result) {
-      var contents = result.contents;
-      createEntryMetadatas.call(this, contents, 0, [], false, successCallback, errorCallback);
+      if (result.is_deleted) {
+        errorCallback("NOT_FOUND");
+      } else {
+        var contents = result.contents;
+        createEntryMetadatas.call(this, contents, 0, [], false, successCallback, errorCallback);
+      }
     }.bind(this));
   };
 
@@ -160,7 +163,7 @@
         }).done(function(result) {
           successCallback();
         }.bind(this)).fail(function(error) {
-          errorCallback("FAILED");
+          handleError.call(this, error, successCallback, errorCallback);
         }.bind(this));
       } else {
         successCallback();
@@ -184,12 +187,7 @@
       console.log(result);
       successCallback(result, false);
     }.bind(this)).fail(function(error) {
-      console.log(error);
-      if (error.status === 416) {
-        successCallback(new ArrayBuffer(), false);
-      } else {
-        errorCallback(error);
-      }
+      handleError.call(this, error, successCallback, errorCallback);
     }.bind(this));
   };
 
@@ -208,8 +206,7 @@
     }).done(function(result) {
       successCallback();
     }.bind(this)).fail(function(error) {
-      console.log(error);
-      errorCallback("FAILED");
+      handleError.call(this, error, successCallback, errorCallback);
     }.bind(this));
   };
 
@@ -228,8 +225,7 @@
     }).done(function(result) {
       successCallback();
     }.bind(this)).fail(function(error) {
-      console.log(error);
-      errorCallback("FAILED");
+      handleError.call(this, error, successCallback, errorCallback);
     }.bind(this));
   };
 
@@ -249,8 +245,7 @@
     }).done(function(result) {
       successCallback();
     }.bind(this)).fail(function(error) {
-      console.log(error);
-      errorCallback("FAILED");
+      handleError.call(this, error, successCallback, errorCallback);
     }.bind(this));
   };
 
@@ -270,8 +265,7 @@
     }).done(function(result) {
       successCallback();
     }.bind(this)).fail(function(error) {
-      console.log(error);
-      errorCallback(error);
+      handleError.call(this, error, successCallback, errorCallback);
     }.bind(this));
   };
 
@@ -288,8 +282,7 @@
     }).done(function(result) {
       successCallback();
     }.bind(this)).fail(function(error) {
-      console.log(error);
-      errorCallback("FAILED");
+      handleError.call(this, error, successCallback, errorCallback);
     }.bind(this));
   };
 
@@ -353,12 +346,23 @@
         reader.readAsArrayBuffer(blob);
       }
     }.bind(this)).fail(function(error) {
-      console.log(error);
-      errorCallback("FAILED");
+      handleError.call(this, error, successCallback, errorCallback);
     }.bind(this));
   };
 
   // Private functions
+
+  var handleError = function(error, successCallback, errorCallback) {
+    console.log(error);
+    var status = error.status;
+    if (status === 404) {
+      errorCallback("NOT_FOUND");
+    } else if (status === 416) {
+      successCallback(new ArrayBuffer(), false);
+    } else {
+      errorCallback("FAILED");
+    }
+  };
 
   var sendContents = function(options, successCallback, errorCallback) {
     if (!options.hasMore) {
@@ -376,7 +380,7 @@
         }).done(function(result) {
           successCallback();
         }.bind(this)).fail(function(error) {
-          errorCallback("FAILED");
+          handleError.call(this, error, successCallback, errorCallback);
         }.bind(this));
       } else {
         successCallback();
@@ -417,7 +421,7 @@
         };
         sendContents.call(this, req, successCallback, errorCallback);
       }.bind(this)).fail(function(error) {
-        errorCallback("FAILED");
+        handleError.call(this, error, successCallback, errorCallback);
       }.bind(this));
     }
   };
@@ -515,8 +519,7 @@
       };
       fileReader.readAsDataURL(blob);
     }.bind(this)).fail(function(error) {
-      console.log(error);
-      errorCallback("IO");
+      handleError.call(this, error, successCallback, errorCallback);
     }.bind(this));
   };
 
