@@ -11,14 +11,6 @@
     });
   });
 
-  window.addEventListener("load", function() {
-    dropbox_fs_.resume(function() {
-      console.log("Resumed");
-    }, function(reason) {
-      console.log(reason);
-    });
-  });
-
   var mount = function(successCallback, errorCallback) {
     dropbox_fs_.mount(function() {
       successCallback();
