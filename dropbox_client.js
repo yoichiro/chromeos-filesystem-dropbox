@@ -4,7 +4,7 @@
 
   var AUTH_URL = "https://www.dropbox.com/1/oauth2/authorize" +
       "?response_type=token&client_id=u4emlzpeiilp7n0" +
-      "&redirect_uri=https://gdacnmpeheenhnpchfkklcaciaogkoap.chromiumapp.org/";
+      "&redirect_uri=" + chrome.identity.getRedirectURL("");
 
   var CHUNK_SIZE = 1024 * 1024 * 4; // 4MB
 
