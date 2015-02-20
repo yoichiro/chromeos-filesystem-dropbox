@@ -1,9 +1,9 @@
 {
-  "name": "DropboxFS for Chrome OS",
+  "name": "Dropbox File System",
   "version": "1.0.0",
   "dependencies": {
     "jquery": "~1.11.2",
-    "paper-toast": "Polymer/paper-toast#~0.5.3",
-    "paper-button": "Polymer/paper-button#~0.5.3"
+    "paper-toast": "Polymer/paper-toast#~0.5.4",
+    "paper-button": "Polymer/paper-button#~0.5.4"
   }
 }
