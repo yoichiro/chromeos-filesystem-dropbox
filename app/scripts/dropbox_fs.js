@@ -99,17 +99,13 @@
         } else {
             var metadataCache = getMetadataCache.call(this);
             var cache = metadataCache.get(options.entryPath);
-            if (cache.needFetch) {
+            if (cache.directoryExists && cache.fileExists) {
+                successCallback(cache.metadata);
+            } else {
                 this.dropbox_client_.getMetadata(
                     options.entryPath, false, function(entryMetadata) {
                         successCallback(entryMetadata);
                     }.bind(this), errorCallback);
-            } else {
-                if (cache.exists) {
-                    successCallback(cache.metadata);
-                } else {
-                    errorCallback("NOT_FOUND");
-                }
             }
         }
     };
