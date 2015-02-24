@@ -12,6 +12,7 @@
     var DropboxFS = function() {
         this.dropbox_client_ = null;
         this.opened_files_ = {};
+        this.metadata_cache_ = null;
         assignEventHandlers.call(this);
     };
 
@@ -80,18 +81,37 @@
 
     DropboxFS.prototype.onReadDirectoryRequested = function(options, successCallback, errorCallback) {
         console.log("onReadDirectoryRequested");
-        this.dropbox_client_.readDirectory(options.directoryPath, function(entryMetadatas) {
-            successCallback(entryMetadatas, false);
+        this.dropbox_client_.readDirectory(options.directoryPath, function(entryMetadataList) {
+            var cache = getMetadataCache.call(this);
+            cache.put(options.directoryPath, entryMetadataList);
+            successCallback(entryMetadataList, false);
         }.bind(this), errorCallback);
     };
 
     DropboxFS.prototype.onGetMetadataRequested = function(options, successCallback, errorCallback) {
         console.log("onGetMetadataRequested: thumbnail=" + options.thumbnail);
         console.log(options);
-        this.dropbox_client_.getMetadata(
-            options.entryPath, options.thumbnail, function(entryMetadata) {
-                successCallback(entryMetadata);
-            }.bind(this), errorCallback);
+        if (options.thumbnail) {
+            this.dropbox_client_.getMetadata(
+                options.entryPath, true, function(entryMetadata) {
+                    successCallback(entryMetadata);
+                }.bind(this), errorCallback);
+        } else {
+            var metadataCache = getMetadataCache.call(this);
+            var cache = metadataCache.get(options.entryPath);
+            if (cache.needFetch) {
+                this.dropbox_client_.getMetadata(
+                    options.entryPath, false, function(entryMetadata) {
+                        successCallback(entryMetadata);
+                    }.bind(this), errorCallback);
+            } else {
+                if (cache.exists) {
+                    successCallback(cache.metadata);
+                } else {
+                    errorCallback("NOT_FOUND");
+                }
+            }
+        }
     };
 
     DropboxFS.prototype.onOpenFileRequested = function(options, successCallback, errorCallback) {
@@ -297,6 +317,13 @@
                     this.onCreateFileRequested(options, successCallback, errorCallback);
                 }.bind(this)));
         console.log("End: assignEventHandlers");
+    };
+
+    var getMetadataCache = function() {
+        if (!this.metadata_cache_) {
+            this.metadata_cache_ = new MetadataCache();
+        }
+        return this.metadata_cache_;
     };
 
     // Export

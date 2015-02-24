@@ -14,7 +14,12 @@
   ],
   "app": {
     "background": {
-      "scripts": ["bower_components/jquery/dist/jquery.min.js", "scripts/dropbox_client.js", "scripts/dropbox_fs.js", "scripts/background.js"]
+      "scripts": [
+          "bower_components/jquery/dist/jquery.min.js",
+          "scripts/metadata_cache.js",
+          "scripts/dropbox_client.js",
+          "scripts/dropbox_fs.js",
+          "scripts/background.js"]
     }
   },
   "icons": {
