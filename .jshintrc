@@ -20,6 +20,7 @@
     "globals" : {
         "$": true,
         "chrome": true,
+        "MetadataCache": true,
         "DropboxFS": true,
         "DropboxClient": true
     }
