@@ -151,6 +151,8 @@
         console.log("onDeleteEntryRequested");
         console.log(options);
         this.dropbox_client_.deleteEntry(options.entryPath, function() {
+            var metadataCache = getMetadataCache.call(this);
+            metadataCache.remove(options.entryPath);
             successCallback();
         }.bind(this), errorCallback);
     };
@@ -159,6 +161,9 @@
         console.log("onMoveEntryRequested");
         console.log(options);
         this.dropbox_client_.moveEntry(options.sourcePath, options.targetPath, function() {
+            var metadataCache = getMetadataCache.call(this);
+            metadataCache.remove(options.sourcePath);
+            metadataCache.remove(options.targetPath);
             successCallback();
         }.bind(this), errorCallback);
     };
@@ -167,6 +172,9 @@
         console.log("onCopyEntryRequested");
         console.log(options);
         this.dropbox_client_.copyEntry(options.sourcePath, options.targetPath, function() {
+            var metadataCache = getMetadataCache.call(this);
+            metadataCache.remove(options.sourcePath);
+            metadataCache.remove(options.targetPath);
             successCallback();
         }.bind(this), errorCallback);
     };
@@ -193,6 +201,8 @@
         console.log("onCreateFileRequested");
         console.log(options);
         this.dropbox_client_.createFile(options.filePath, function() {
+            var metadataCache = getMetadataCache.call(this);
+            metadataCache.remove(options.filePath);
             successCallback();
         }.bind(this), errorCallback);
     };
