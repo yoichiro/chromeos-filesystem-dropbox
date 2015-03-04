@@ -1,7 +1,11 @@
 {
   "appName": {
-    "message": "Dropbox File System",
+    "message": "File System for Dropbox",
     "description": "Application name"
+  },
+  "shortName": {
+    "message": "Dropbox",
+    "description": "Application short name"
   },
   "appDescription": {
     "message": "This application provides File System for your Dropbox storage.",
