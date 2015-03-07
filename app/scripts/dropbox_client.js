@@ -363,7 +363,7 @@
 
     var handleError = function(error, successCallback, errorCallback) {
         console.log(error);
-        var status = error.status;
+        var status = Number(error.status);
         if (status === 404) {
             errorCallback("NOT_FOUND");
         } else if (status === 416) {
@@ -374,9 +374,9 @@
                 errorCallback("INVALID_OPERATION");
                 chrome.notifications.create("", {
                     type: "basic",
-                    title: "Dropbox File System",
+                    title: "File System for Dropbox",
                     message: "The access token has been expired. File system unmounted.",
-                    iconUrl: "icons/48.png"
+                    iconUrl: "/icons/48.png"
                 }, function(notificationId) {
                 }.bind(this));
             }.bind(this));
