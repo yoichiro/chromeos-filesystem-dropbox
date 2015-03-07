@@ -63,7 +63,7 @@
             chrome.storage.local.get("accessToken", function(items) {
                 var accessToken = items.accessToken;
                 if (accessToken) {
-                    this.dropbox_client_ = new DropboxClient();
+                    this.dropbox_client_ = new DropboxClient(this);
                     this.dropbox_client_.setAccessToken(accessToken);
                     successCallback();
                 } else {
