@@ -5,14 +5,20 @@
 body {
   font-family: Helvetica, Arial, sans-serif;
   font-size: 14px;
-  margin: 10px;
-  padding: 0px;
 }
 
 paper-button {
   display: block;
-  margin: 30px auto 30px auto;
+  margin: 15px auto 0 auto;
   width: 100px;
   font-size: 16px;
   color: #4285f4;
+}
+
+.main {
+  margin: 10px;
+}
+
+.footer {
+  margin: 10px;
 }
