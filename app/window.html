@@ -19,17 +19,23 @@
   <link rel="stylesheet" href="styles/style.css">
 </head>
 
-<body>
+<body fullbleed vertical layout>
   <paper-toast data-message="mountAttempt" id="toast-mount-attempt"></paper-toast>
   <paper-toast data-message="mountFail" id="toast-mount-fail"></paper-toast>
   <paper-toast data-message="mountSuccess" id="toast-mount-success"></paper-toast>
 
-  <div vertical layout center>
-    <div horizontal layout>
-      <img src="/icons/64.png">
-      <h1>Mount your Dropbox</h1>
+  <div flex class="main">
+    <div vertical layout center>
+      <div horizontal layout>
+        <img src="/icons/64.png">
+        <h1>Mount your Dropbox</h1>
+      </div>
+      <paper-button id="btnMount" data-message="mount"></paper-button>
     </div>
-    <paper-button id="btnMount" data-message="mount"></paper-button>
+  </div>
+  
+  <div horizontal end-justified layout class="footer">
+    <a href="https://www.dropbox.com/account/security#apps" target="_blank">Dropbox linked applications list</a>
   </div>
 
   <script type="text/javascript" src="scripts/window.js"></script>
