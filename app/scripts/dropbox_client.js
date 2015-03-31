@@ -6,6 +6,7 @@
 
     var AUTH_URL = "https://www.dropbox.com/1/oauth2/authorize" +
             "?response_type=token&client_id=u4emlzpeiilp7n0" +
+            "&force_reapprove=true" +
             "&redirect_uri=" + chrome.identity.getRedirectURL("");
 
     var CHUNK_SIZE = 1024 * 1024 * 4; // 4MB
@@ -15,6 +16,7 @@
     var DropboxClient = function(dropboxFS) {
         this.dropbox_fs_ = dropboxFS;
         this.access_token_ = null;
+        this.uid_ = null;
         this.writeRequestMap = {};
         initializeJQueryAjaxBinaryHandler.call(this);
     };
@@ -42,7 +44,11 @@
                     }
                 }
                 if (this.access_token_) {
-                    successCallback();
+                    chrome.identity.removeCachedAuthToken({
+                        token: this.access_token_
+                    }, function() {
+                        successCallback();
+                    }.bind(this));
                 } else {
                     errorCallback("Issuing Access token failed");
                 }
@@ -83,6 +89,33 @@
         } else {
             errorCallback("Not authorized");
         }
+    };
+    
+    DropboxClient.prototype.getUserInfo = function(successCallback, errorCallback) {
+        $.ajax({
+            type: "GET",
+            url: "https://api.dropbox.com/1/account/info",
+            headers: {
+                "Authorization": "Bearer " + this.access_token_
+            },
+            dataType: "json"
+        }).done(function(result) {
+            this.uid_ = result.uid;
+            successCallback({
+                uid: result.uid,
+                displayName: result.display_name
+            });
+        }.bind(this)).fail(function(error) {
+            handleError.call(this, error, successCallback, errorCallback);
+        }.bind(this));
+    };
+    
+    DropboxClient.prototype.getUid = function() {
+        return this.uid_;
+    };
+    
+    DropboxClient.prototype.setUid = function(uid) {
+        this.uid_ = uid;
     };
 
     DropboxClient.prototype.getMetadata = function(path, needThumbnail, successCallback, errorCallback) {
