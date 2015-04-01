@@ -17,7 +17,7 @@
     };
 
     // Public functions
-    
+
     DropboxFS.prototype.mount = function(successCallback, errorCallback) {
         var dropboxClient = new DropboxClient(this);
         dropboxClient.authorize(function() {
@@ -222,7 +222,7 @@
     };
 
     // Private functions
-    
+
     var doUnmount = function(dropboxClient, requestId, successCallback) {
         console.log("doUnmount");
         _doUnmount.call(
@@ -249,7 +249,7 @@
                 }.bind(this));
             }.bind(this));
     };
-    
+
     var registerMountedCredential = function(uid, accessToken, callback) {
         var fileSystemId = createFileSystemID.call(this, uid);
         chrome.storage.local.get("credentials", function(items) {
@@ -265,7 +265,7 @@
             }.bind(this));
         }.bind(this));
     };
-    
+
     var getMountedCredential = function(fileSystemId, callback) {
         chrome.storage.local.get("credentials", function(items) {
             var credentials = items.credentials || {};
@@ -425,6 +425,11 @@
         return metadataCache;
     };
 
+    var deleteMetadataCache = function(fileSystemId) {
+        console.log("deleteMetadataCache: " + fileSystemId);
+        delete this.metadata_cache_[fileSystemId];
+    };
+
     var createFileSystemID = function(uid) {
         return FILE_SYSTEM_ID + "://" + uid;
     };
@@ -433,7 +438,7 @@
         var dropboxClient = this.dropbox_client_map_[fileSystemID];
         return dropboxClient;
     };
-    
+
     var getOpenedFiles = function(fileSystemId) {
         var openedFiles = this.opened_files_[fileSystemId];
         if (!openedFiles) {
