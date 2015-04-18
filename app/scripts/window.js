@@ -19,6 +19,7 @@
         var openedFilesLimits = [0, 5, 10, 15];
         for (var i = 0; i < openedFilesLimits.length; i++) {
             var limit = document.querySelector("#openedFilesLimit" + openedFilesLimits[i]);
+            /*jshint loopfunc: true */
             limit.addEventListener("core-change", function(e) {
                 onChangedOpenedFilesLimit(e);
             });
@@ -81,7 +82,7 @@
             }
         }
     };
-    
+
     var onClickedBtnSettings = function(evt) {
         chrome.storage.local.get("settings", function(items) {
             var settings = items.settings || {};
@@ -90,7 +91,7 @@
             document.querySelector("#settingsDialog").toggle();
         });
     };
-    
+
     var onChangedOpenedFilesLimit = function(evt) {
         chrome.storage.local.get("settings", function(items) {
             var settings = items.settings || {};
@@ -101,7 +102,7 @@
                 console.log("Saving settings done.");
             });
         });
-        
+
     };
 
     window.addEventListener("load", function(e) {
