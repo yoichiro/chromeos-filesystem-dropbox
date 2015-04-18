@@ -16,7 +16,15 @@ paper-button {
 }
 
 .main {
-  margin: 10px;
+  margin: 50px 10px 10px 10px;
+}
+
+.main a {
+  margin-top: 50px;
+}
+
+.main img {
+  margin-right: 15px;
 }
 
 .footer {

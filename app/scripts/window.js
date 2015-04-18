@@ -11,6 +11,18 @@
         btnMount.addEventListener("click", function(e) {
             onClickedBtnMount();
         });
+       // Settings dialog
+        var btnSettings = document.querySelector("#btnSettings");
+        btnSettings.addEventListener("click", function(e) {
+            onClickedBtnSettings(e);
+        });
+        var openedFilesLimits = [5, 10, 15, 20];
+        for (var i = 0; i < openedFilesLimits.length; i++) {
+            var limit = document.querySelector("#openedFilesLimit" + openedFilesLimits[i]);
+            limit.addEventListener("core-change", function(e) {
+                onChangedOpenedFilesLimit(e);
+            });
+        }
     };
 
     var onClickedBtnMount = function() {
@@ -68,6 +80,28 @@
                 break;
             }
         }
+    };
+    
+    var onClickedBtnSettings = function(evt) {
+        chrome.storage.local.get("settings", function(items) {
+            var settings = items.settings || {};
+            var openedFilesLimit = settings.openedFilesLimit || "10";
+            document.querySelector("#openedFilesLimit").selected = "openedFilesLimit" + openedFilesLimit;
+            document.querySelector("#settingsDialog").toggle();
+        });
+    };
+    
+    var onChangedOpenedFilesLimit = function(evt) {
+        chrome.storage.local.get("settings", function(items) {
+            var settings = items.settings || {};
+            var selected = document.querySelector("#openedFilesLimit").selected;
+            var value = selected.substring(16);
+            settings.openedFilesLimit = value;
+            chrome.storage.local.set({settings: settings}, function() {
+                console.log("Saving settings done.");
+            });
+        });
+        
     };
 
     window.addEventListener("load", function(e) {
