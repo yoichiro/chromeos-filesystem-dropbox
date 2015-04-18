@@ -36,15 +36,20 @@
                         errorCallback("ALREADY_MOUNTED");
                     } else {
                         this.dropbox_client_map_[fileSystemId] = dropboxClient;
-                        chrome.fileSystemProvider.mount({
-                            fileSystemId: fileSystemId,
-                            displayName: FILE_SYSTEM_NAME + " (" + userInfo.displayName + ")",
-                            writable: true
-                        }, function() {
-                            registerMountedCredential.call(
-                                this, userInfo.uid, dropboxClient.getAccessToken(), function() {
-                                    successCallback();
-                                }.bind(this));
+                        chrome.storage.local.get("settings", function(items) {
+                            var settings = items.settings || {};
+                            var openedFilesLimit = settings.openedFilesLimit || "10";
+                            chrome.fileSystemProvider.mount({
+                                fileSystemId: fileSystemId,
+                                displayName: FILE_SYSTEM_NAME + " (" + userInfo.displayName + ")",
+                                writable: true,
+                                openedFilesLimit: Number(openedFilesLimit)
+                            }, function() {
+                                registerMountedCredential.call(
+                                    this, userInfo.uid, dropboxClient.getAccessToken(), function() {
+                                        successCallback();
+                                    }.bind(this));
+                            }.bind(this));
                         }.bind(this));
                     }
                 }.bind(this));
