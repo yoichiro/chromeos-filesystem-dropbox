@@ -16,7 +16,7 @@
         btnSettings.addEventListener("click", function(e) {
             onClickedBtnSettings(e);
         });
-        var openedFilesLimits = [5, 10, 15, 20];
+        var openedFilesLimits = [0, 5, 10, 15];
         for (var i = 0; i < openedFilesLimits.length; i++) {
             var limit = document.querySelector("#openedFilesLimit" + openedFilesLimits[i]);
             limit.addEventListener("core-change", function(e) {
