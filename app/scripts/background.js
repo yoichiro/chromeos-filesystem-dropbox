@@ -4,7 +4,7 @@
 
     var dropbox_fs_ = new DropboxFS();
 
-    chrome.app.runtime.onLaunched.addListener(function() {
+    var openWindow = function() {
         chrome.app.window.create("window.html", {
             outerBounds: {
                 width: 600,
@@ -12,7 +12,13 @@
             },
             resizable: false
         });
-    });
+    };
+
+    chrome.app.runtime.onLaunched.addListener(openWindow);
+
+    if (chrome.fileSystemProvider.onMountRequested) {
+        chrome.fileSystemProvider.onMountRequested.addListener(openWindow);
+    }
 
     var mount = function(successCallback, errorCallback) {
         dropbox_fs_.mount(function() {
