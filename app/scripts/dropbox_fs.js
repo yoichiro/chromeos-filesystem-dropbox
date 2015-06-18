@@ -201,6 +201,8 @@
         var filePath = getOpenedFiles.call(this, options.fileSystemId)[options.openRequestId];
         var dropboxClient = getDropboxClient.call(this, options.fileSystemId);
         dropboxClient.writeFile(filePath, options.data, options.offset, options.openRequestId, function() {
+            var metadataCache = getMetadataCache.call(this, options.fileSystemId);
+            metadataCache.remove(filePath);
             successCallback();
         }.bind(this), errorCallback);
     };
@@ -210,6 +212,8 @@
         console.log(options);
         var dropboxClient = getDropboxClient.call(this, options.fileSystemId);
         dropboxClient.truncate(options.filePath, options.length, function() {
+            var metadataCache = getMetadataCache.call(this, options.fileSystemId);
+            metadataCache.remove(options.filePath);
             console.log("onTruncateRequested - done");
             successCallback(false);
         }.bind(this), errorCallback);
