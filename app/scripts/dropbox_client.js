@@ -397,7 +397,7 @@
     // Private functions
 
     var handleError = function(error, successCallback, errorCallback) {
-        console.log(error);
+        console.error(error);
         var status = Number(error.status);
         if (status === 404) {
             errorCallback("NOT_FOUND");
@@ -410,7 +410,7 @@
                 showNotification.call(this, "The access token has been expired. File system unmounted.");
             }.bind(this));
         } else {
-            showNotification.call(this, "Error: status=" + status);
+            // showNotification.call(this, "Error: status=" + status);
             errorCallback("FAILED");
         }
     };
