@@ -1,3 +1,5 @@
+[![Code Climate](https://codeclimate.com/github/yoichiro/chromeos-filesystem-dropbox/badges/gpa.svg)](https://codeclimate.com/github/yoichiro/chromeos-filesystem-dropbox)
+
 # File System for Dropbox
 
 File System for Dropbox provides you an ability to access to your Dropbox storage directly from the Files app.
