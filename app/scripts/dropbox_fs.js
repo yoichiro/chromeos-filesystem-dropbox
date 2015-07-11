@@ -349,78 +349,33 @@
                     this.onUnmountRequested(options, successCallback, errorCallback);
                 }
             }.bind(this));
-        chrome.fileSystemProvider.onReadDirectoryRequested.addListener(
-            createEventHandler.call(
-                this,
-                function(options, successCallback, errorCallback) {
-                    this.onReadDirectoryRequested(options, successCallback, errorCallback);
-                }.bind(this)));
-        chrome.fileSystemProvider.onGetMetadataRequested.addListener(
-            createEventHandler.call(
-                this,
-                function(options, successCallback, errorCallback) {
-                    this.onGetMetadataRequested(options, successCallback, errorCallback);
-                }.bind(this)));
-        chrome.fileSystemProvider.onOpenFileRequested.addListener(
-            createEventHandler.call(
-                this,
-                function(options, successCallback, errorCallback) {
-                    this.onOpenFileRequested(options, successCallback, errorCallback);
-                }.bind(this)));
-        chrome.fileSystemProvider.onReadFileRequested.addListener(
-            createEventHandler.call(
-                this,
-                function(options, successCallback, errorCallback) {
-                    this.onReadFileRequested(options, successCallback, errorCallback);
-                }.bind(this)));
-        chrome.fileSystemProvider.onCloseFileRequested.addListener(
-            createEventHandler.call(
-                this,
-                function(options, successCallback, errorCallback) {
-                    this.onCloseFileRequested(options, successCallback, errorCallback);
-                }.bind(this)));
-        chrome.fileSystemProvider.onCreateDirectoryRequested.addListener(
-            createEventHandler.call(
-                this,
-                function(options, successCallback, errorCallback) {
-                    this.onCreateDirectoryRequested(options, successCallback, errorCallback);
-                }.bind(this)));
-        chrome.fileSystemProvider.onDeleteEntryRequested.addListener(
-            createEventHandler.call(
-                this,
-                function(options, successCallback, errorCallback) {
-                    this.onDeleteEntryRequested(options, successCallback, errorCallback);
-                }.bind(this)));
-        chrome.fileSystemProvider.onMoveEntryRequested.addListener(
-            createEventHandler.call(
-                this,
-                function(options, successCallback, errorCallback) {
-                    this.onMoveEntryRequested(options, successCallback, errorCallback);
-                }.bind(this)));
-        chrome.fileSystemProvider.onCopyEntryRequested.addListener(
-            createEventHandler.call(
-                this,
-                function(options, successCallback, errorCallback) {
-                    this.onCopyEntryRequested(options, successCallback, errorCallback);
-                }.bind(this)));
-        chrome.fileSystemProvider.onWriteFileRequested.addListener(
-            createEventHandler.call(
-                this,
-                function(options, successCallback, errorCallback) {
-                    this.onWriteFileRequested(options, successCallback, errorCallback);
-                }.bind(this)));
-        chrome.fileSystemProvider.onTruncateRequested.addListener(
-            createEventHandler.call(
-                this,
-                function(options, successCallback, errorCallback) {
-                    this.onTruncateRequested(options, successCallback, errorCallback);
-                }.bind(this)));
-        chrome.fileSystemProvider.onCreateFileRequested.addListener(
-            createEventHandler.call(
-                this,
-                function(options, successCallback, errorCallback) {
-                    this.onCreateFileRequested(options, successCallback, errorCallback);
-                }.bind(this)));
+        var funcNameList = [
+            "onReadDirectoryRequested",
+            "onGetMetadataRequested",
+            "onOpenFileRequested",
+            "onReadFileRequested",
+            "onCloseFileRequested",
+            "onCreateDirectoryRequested",
+            "onDeleteEntryRequested",
+            "onMoveEntryRequested",
+            "onCopyEntryRequested",
+            "onWriteFileRequested",
+            "onTruncateRequested",
+            "onCreateFileRequested"
+        ];
+        var caller = function(self, funcName) {
+            return function(options, successCallback, errorCallback) {
+                this[funcName](options, successCallback, errorCallback);
+            }.bind(self);
+        };
+        for (var i = 0; i < funcNameList.length; i++) {
+            chrome.fileSystemProvider[funcNameList[i]].addListener(
+                createEventHandler.call(
+                    this,
+                    caller(this, funcNameList[i])
+                )
+            );
+        }
         console.log("End: assignEventHandlers");
     };
 
