@@ -117,16 +117,9 @@
     DropboxClient.prototype.setUid = function(uid) {
         this.uid_ = uid;
     };
-
+    
     DropboxClient.prototype.getMetadata = function(path, needThumbnail, successCallback, errorCallback) {
-        $.ajax({
-            type: "GET",
-            url: "https://api.dropbox.com/1/metadata/auto" + path + "?list=false",
-            headers: {
-                "Authorization": "Bearer " + this.access_token_
-            },
-            dataType: "json"
-        }).done(function(result) {
+        $.ajax(createFetchingMetadataObject.call(this, path, "list=false")).done(function(result) {
             if (result.is_deleted) {
                 errorCallback("NOT_FOUND");
             } else {
@@ -163,14 +156,7 @@
     };
 
     DropboxClient.prototype.readDirectory = function(path, successCallback, errorCallback) {
-        $.ajax({
-            type: "GET",
-            url: "https://api.dropbox.com/1/metadata/auto" + path + "?list=true&include_deleted=false",
-            headers: {
-                "Authorization": "Bearer " + this.access_token_
-            },
-            dataType: "json"
-        }).done(function(result) {
+        $.ajax(createFetchingMetadataObject.call(this, path, "list=true&include_deleted=false")).done(function(result) {
             if (result.is_deleted) {
                 errorCallback("NOT_FOUND");
             } else {
@@ -236,83 +222,21 @@
     };
 
     DropboxClient.prototype.createDirectory = function(directoryPath, successCallback, errorCallback) {
-        $.ajax({
-            type: "POST",
-            url: "https://api.dropbox.com/1/fileops/create_folder",
-            headers: {
-                "Authorization": "Bearer " + this.access_token_
-            },
-            data: {
-                root: "auto",
-                path: directoryPath
-            },
-            dataType: "json"
-        }).done(function(result) {
-            successCallback();
-        }.bind(this)).fail(function(error) {
-            handleError.call(this, error, successCallback, errorCallback);
-        }.bind(this));
+        createOrDeleteEntry.call(this, "create_folder", directoryPath, successCallback, errorCallback);
     };
 
     DropboxClient.prototype.deleteEntry = function(entryPath, successCallback, errorCallback) {
-        $.ajax({
-            type: "POST",
-            url: "https://api.dropbox.com/1/fileops/delete",
-            headers: {
-                "Authorization": "Bearer " + this.access_token_
-            },
-            data: {
-                root: "auto",
-                path: entryPath
-            },
-            dataType: "json"
-        }).done(function(result) {
-            successCallback();
-        }.bind(this)).fail(function(error) {
-            handleError.call(this, error, successCallback, errorCallback);
-        }.bind(this));
+        createOrDeleteEntry.call(this, "delete", entryPath, successCallback, errorCallback);
     };
-
+    
     DropboxClient.prototype.moveEntry = function(sourcePath, targetPath, successCallback, errorCallback) {
-        $.ajax({
-            type: "POST",
-            url: "https://api.dropbox.com/1/fileops/move",
-            headers: {
-                "Authorization": "Bearer " + this.access_token_
-            },
-            data: {
-                root: "auto",
-                from_path: sourcePath,
-                to_path: targetPath
-            },
-            dataType: "json"
-        }).done(function(result) {
-            successCallback();
-        }.bind(this)).fail(function(error) {
-            handleError.call(this, error, successCallback, errorCallback);
-        }.bind(this));
+        copyOrMoveEntry.call(this, "move", sourcePath, targetPath, successCallback, errorCallback);
     };
 
     DropboxClient.prototype.copyEntry = function(sourcePath, targetPath, successCallback, errorCallback) {
-        $.ajax({
-            type: "POST",
-            url: "https://api.dropbox.com/1/fileops/copy",
-            headers: {
-                "Authorization": "Bearer " + this.access_token_
-            },
-            data: {
-                root: "auto",
-                from_path: sourcePath,
-                to_path: targetPath
-            },
-            dataType: "json"
-        }).done(function(result) {
-            successCallback();
-        }.bind(this)).fail(function(error) {
-            handleError.call(this, error, successCallback, errorCallback);
-        }.bind(this));
+        copyOrMoveEntry.call(this, "copy", sourcePath, targetPath, successCallback, errorCallback);
     };
-
+    
     DropboxClient.prototype.createFile = function(filePath, successCallback, errorCallback) {
         $.ajax({
             type: "PUT",
@@ -395,6 +319,56 @@
     };
 
     // Private functions
+    
+    var copyOrMoveEntry = function(operation, sourcePath, targetPath, successCallback, errorCallback) {
+        $.ajax({
+            type: "POST",
+            url: "https://api.dropbox.com/1/fileops/" + operation,
+            headers: {
+                "Authorization": "Bearer " + this.access_token_
+            },
+            data: {
+                root: "auto",
+                from_path: sourcePath,
+                to_path: targetPath
+            },
+            dataType: "json"
+        }).done(function(result) {
+            successCallback();
+        }.bind(this)).fail(function(error) {
+            handleError.call(this, error, successCallback, errorCallback);
+        }.bind(this));
+    };
+    
+    var createFetchingMetadataObject = function(path, queryParameter) {
+        return {
+            type: "GET",
+            url: "https://api.dropbox.com/1/metadata/auto" + path + "?" + queryParameter,
+            headers: {
+                "Authorization": "Bearer " + this.access_token_
+            },
+            dataType: "json"
+        };
+    };
+    
+    var createOrDeleteEntry = function(operation, path, successCallback, errorCallback) {
+        $.ajax({
+            type: "POST",
+            url: "https://api.dropbox.com/1/fileops/" + operation,
+            headers: {
+                "Authorization": "Bearer " + this.access_token_
+            },
+            data: {
+                root: "auto",
+                path: path
+            },
+            dataType: "json"
+        }).done(function(result) {
+            successCallback();
+        }.bind(this)).fail(function(error) {
+            handleError.call(this, error, successCallback, errorCallback);
+        }.bind(this));
+    };
 
     var handleError = function(error, successCallback, errorCallback) {
         console.error(error);
