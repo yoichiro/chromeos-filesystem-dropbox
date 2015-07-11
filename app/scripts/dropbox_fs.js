@@ -153,23 +153,13 @@
     };
 
     DropboxFS.prototype.onMoveEntryRequested = function(dropboxClient, options, successCallback, errorCallback) {
-        dropboxClient.moveEntry(options.sourcePath, options.targetPath, function() {
-            var metadataCache = getMetadataCache.call(this, options.fileSystemId);
-            metadataCache.remove(options.sourcePath);
-            metadataCache.remove(options.targetPath);
-            successCallback();
-        }.bind(this), errorCallback);
+        copyOrMoveEntry.call(this, "move", dropboxClient, options, successCallback, errorCallback);
     };
 
     DropboxFS.prototype.onCopyEntryRequested = function(dropboxClient, options, successCallback, errorCallback) {
-        dropboxClient.copyEntry(options.sourcePath, options.targetPath, function() {
-            var metadataCache = getMetadataCache.call(this, options.fileSystemId);
-            metadataCache.remove(options.sourcePath);
-            metadataCache.remove(options.targetPath);
-            successCallback();
-        }.bind(this), errorCallback);
+        copyOrMoveEntry.call(this, "copy", dropboxClient, options, successCallback, errorCallback);
     };
-
+    
     DropboxFS.prototype.onWriteFileRequested = function(dropboxClient, options, successCallback, errorCallback) {
         var filePath = getOpenedFiles.call(this, options.fileSystemId)[options.openRequestId];
         dropboxClient.writeFile(filePath, options.data, options.offset, options.openRequestId, function() {
@@ -197,6 +187,15 @@
     };
 
     // Private functions
+    
+    var copyOrMoveEntry = function(operation, dropboxClient, options, successCallback, errorCallback) {
+        dropboxClient[operation + "Entry"](options.sourcePath, options.targetPath, function() {
+            var metadataCache = getMetadataCache.call(this, options.fileSystemId);
+            metadataCache.remove(options.sourcePath);
+            metadataCache.remove(options.targetPath);
+            successCallback();
+        }.bind(this), errorCallback);
+    }
 
     var doUnmount = function(dropboxClient, requestId, successCallback) {
         console.log("doUnmount");
