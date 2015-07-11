@@ -86,7 +86,6 @@
     };
 
     DropboxFS.prototype.onReadDirectoryRequested = function(options, successCallback, errorCallback) {
-        console.log("onReadDirectoryRequested");
         var dropboxClient = getDropboxClient.call(this, options.fileSystemId);
         dropboxClient.readDirectory(options.directoryPath, function(entryMetadataList) {
             var cache = getMetadataCache.call(this, options.fileSystemId);
@@ -96,8 +95,6 @@
     };
 
     DropboxFS.prototype.onGetMetadataRequested = function(options, successCallback, errorCallback) {
-        console.log("onGetMetadataRequested: thumbnail=" + options.thumbnail);
-        console.log(options);
         var dropboxClient = getDropboxClient.call(this, options.fileSystemId);
         if (options.thumbnail) {
             dropboxClient.getMetadata(
@@ -119,8 +116,6 @@
     };
 
     DropboxFS.prototype.onOpenFileRequested = function(options, successCallback, errorCallback) {
-        console.log("onOpenFileRequested");
-        console.log(options);
         var dropboxClient = getDropboxClient.call(this, options.fileSystemId);
         dropboxClient.openFile(options.filePath, options.requestId, options.mode, function() {
             var openedFiles = getOpenedFiles.call(this, options.fileSystemId);
@@ -130,8 +125,6 @@
     };
 
     DropboxFS.prototype.onReadFileRequested = function(options, successCallback, errorCallback) {
-        console.log("onReadFileRequested - start");
-        console.log(options);
         var filePath = getOpenedFiles.call(this, options.fileSystemId)[options.openRequestId];
         var dropboxClient = getDropboxClient.call(this, options.fileSystemId);
         dropboxClient.readFile(
@@ -142,7 +135,6 @@
     };
 
     DropboxFS.prototype.onCloseFileRequested = function(options, successCallback, errorCallback) {
-        console.log("onCloseFileRequested");
         var filePath = getOpenedFiles.call(this, options.fileSystemId)[options.openRequestId];
         var dropboxClient = getDropboxClient.call(this, options.fileSystemId);
         dropboxClient.closeFile(filePath, options.openRequestId, function() {
@@ -152,8 +144,6 @@
     };
 
     DropboxFS.prototype.onCreateDirectoryRequested = function(options, successCallback, errorCallback) {
-        console.log("onCreateDirectoryRequested");
-        console.log(options);
         var dropboxClient = getDropboxClient.call(this, options.fileSystemId);
         dropboxClient.createDirectory(options.directoryPath, function() {
             successCallback();
@@ -161,8 +151,6 @@
     };
 
     DropboxFS.prototype.onDeleteEntryRequested = function(options, successCallback, errorCallback) {
-        console.log("onDeleteEntryRequested");
-        console.log(options);
         var dropboxClient = getDropboxClient.call(this, options.fileSystemId);
         dropboxClient.deleteEntry(options.entryPath, function() {
             var metadataCache = getMetadataCache.call(this, options.fileSystemId);
@@ -172,8 +160,6 @@
     };
 
     DropboxFS.prototype.onMoveEntryRequested = function(options, successCallback, errorCallback) {
-        console.log("onMoveEntryRequested");
-        console.log(options);
         var dropboxClient = getDropboxClient.call(this, options.fileSystemId);
         dropboxClient.moveEntry(options.sourcePath, options.targetPath, function() {
             var metadataCache = getMetadataCache.call(this, options.fileSystemId);
@@ -184,8 +170,6 @@
     };
 
     DropboxFS.prototype.onCopyEntryRequested = function(options, successCallback, errorCallback) {
-        console.log("onCopyEntryRequested");
-        console.log(options);
         var dropboxClient = getDropboxClient.call(this, options.fileSystemId);
         dropboxClient.copyEntry(options.sourcePath, options.targetPath, function() {
             var metadataCache = getMetadataCache.call(this, options.fileSystemId);
@@ -196,8 +180,6 @@
     };
 
     DropboxFS.prototype.onWriteFileRequested = function(options, successCallback, errorCallback) {
-        console.log("onWriteFileRequested");
-        console.log(options);
         var filePath = getOpenedFiles.call(this, options.fileSystemId)[options.openRequestId];
         var dropboxClient = getDropboxClient.call(this, options.fileSystemId);
         dropboxClient.writeFile(filePath, options.data, options.offset, options.openRequestId, function() {
@@ -208,8 +190,6 @@
     };
 
     DropboxFS.prototype.onTruncateRequested = function(options, successCallback, errorCallback) {
-        console.log("onTruncateRequested");
-        console.log(options);
         var dropboxClient = getDropboxClient.call(this, options.fileSystemId);
         dropboxClient.truncate(options.filePath, options.length, function() {
             var metadataCache = getMetadataCache.call(this, options.fileSystemId);
@@ -220,8 +200,6 @@
     };
 
     DropboxFS.prototype.onCreateFileRequested = function(options, successCallback, errorCallback) {
-        console.log("onCreateFileRequested");
-        console.log(options);
         var dropboxClient = getDropboxClient.call(this, options.fileSystemId);
         dropboxClient.createFile(options.filePath, function() {
             var metadataCache = getMetadataCache.call(this, options.fileSystemId);
@@ -336,6 +314,7 @@
         console.log("Start: assignEventHandlers");
         chrome.fileSystemProvider.onUnmountRequested.addListener(
             function(options, successCallback, errorCallback) { // Unmount immediately
+                console.log("onUnmountRequested", options);
                 var fileSystemId = options.fileSystemId;
                 var dropboxClient = getDropboxClient.call(this, fileSystemId);
                 if (!dropboxClient) {
@@ -365,6 +344,7 @@
         ];
         var caller = function(self, funcName) {
             return function(options, successCallback, errorCallback) {
+                console.log(funcName, options);
                 this[funcName](options, successCallback, errorCallback);
             }.bind(self);
         };
