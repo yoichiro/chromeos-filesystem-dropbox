@@ -139,25 +139,21 @@
     };
 
     DropboxFS.prototype.onCreateDirectoryRequested = function(dropboxClient, options, successCallback, errorCallback) {
-        dropboxClient.createDirectory(options.directoryPath, function() {
-            successCallback();
-        }.bind(this), errorCallback);
+        createOrDeleteEntry.call(
+            this, "createDirectory", options.directoryPath, dropboxClient, options, successCallback, errorCallback);
     };
 
     DropboxFS.prototype.onDeleteEntryRequested = function(dropboxClient, options, successCallback, errorCallback) {
-        dropboxClient.deleteEntry(options.entryPath, function() {
-            var metadataCache = getMetadataCache.call(this, options.fileSystemId);
-            metadataCache.remove(options.entryPath);
-            successCallback();
-        }.bind(this), errorCallback);
+        createOrDeleteEntry.call(
+            this, "deleteEntry", options.entryPath, dropboxClient, options, successCallback, errorCallback);
     };
 
     DropboxFS.prototype.onMoveEntryRequested = function(dropboxClient, options, successCallback, errorCallback) {
-        copyOrMoveEntry.call(this, "move", dropboxClient, options, successCallback, errorCallback);
+        copyOrMoveEntry.call(this, "moveEntry", dropboxClient, options, successCallback, errorCallback);
     };
 
     DropboxFS.prototype.onCopyEntryRequested = function(dropboxClient, options, successCallback, errorCallback) {
-        copyOrMoveEntry.call(this, "copy", dropboxClient, options, successCallback, errorCallback);
+        copyOrMoveEntry.call(this, "copyEntry", dropboxClient, options, successCallback, errorCallback);
     };
     
     DropboxFS.prototype.onWriteFileRequested = function(dropboxClient, options, successCallback, errorCallback) {
@@ -179,23 +175,28 @@
     };
 
     DropboxFS.prototype.onCreateFileRequested = function(dropboxClient, options, successCallback, errorCallback) {
-        dropboxClient.createFile(options.filePath, function() {
-            var metadataCache = getMetadataCache.call(this, options.fileSystemId);
-            metadataCache.remove(options.filePath);
-            successCallback();
-        }.bind(this), errorCallback);
+        createOrDeleteEntry.call(
+            this, "createFile", options.filePath, dropboxClient, options, successCallback, errorCallback);
     };
 
     // Private functions
     
     var copyOrMoveEntry = function(operation, dropboxClient, options, successCallback, errorCallback) {
-        dropboxClient[operation + "Entry"](options.sourcePath, options.targetPath, function() {
+        dropboxClient[operation](options.sourcePath, options.targetPath, function() {
             var metadataCache = getMetadataCache.call(this, options.fileSystemId);
             metadataCache.remove(options.sourcePath);
             metadataCache.remove(options.targetPath);
             successCallback();
         }.bind(this), errorCallback);
-    }
+    };
+    
+    var createOrDeleteEntry = function(operation, path, dropboxClient, options, successCallback, errorCallback) {
+        dropboxClient[operation](path, function() {
+            var metadataCache = getMetadataCache.call(this, options.fileSystemId);
+            metadataCache.remove(path);
+            successCallback();
+        }.bind(this), errorCallback);
+    };
 
     var doUnmount = function(dropboxClient, requestId, successCallback) {
         console.log("doUnmount");
