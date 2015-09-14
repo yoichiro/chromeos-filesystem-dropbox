@@ -5,6 +5,7 @@
 body {
   font-family: Helvetica, Arial, sans-serif;
   font-size: 14px;
+  line-height: 17px;
 }
 
 paper-button {
@@ -29,4 +30,12 @@ paper-button {
 
 .footer {
   margin: 10px;
+}
+
+core-toolbar {
+  background-color: #2298f2;
+}
+
+core-toolbar paper-icon-button {
+  color: white;
 }
