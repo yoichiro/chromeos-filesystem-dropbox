@@ -215,12 +215,13 @@
             function() {
                 var fileSystemId = createFileSystemID.call(this, uid);
                 console.log(fileSystemId);
+                delete this.dropbox_client_map_[fileSystemId];
+                deleteMetadataCache.call(this, fileSystemId);
+                successCallback();
                 chrome.fileSystemProvider.unmount({
                     fileSystemId: fileSystemId
                 }, function() {
-                    delete this.dropbox_client_map_[fileSystemId];
-                    deleteMetadataCache.call(this, fileSystemId);
-                    successCallback();
+                    // N/A
                 }.bind(this));
             }.bind(this));
     };
