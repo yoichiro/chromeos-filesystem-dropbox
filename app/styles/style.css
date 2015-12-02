@@ -39,3 +39,7 @@ core-toolbar {
 core-toolbar paper-icon-button {
   color: white;
 }
+
+img.season {
+  position: absolute;
+}
