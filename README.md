@@ -19,6 +19,10 @@ $ npm install
 $ grunt
 ```
 
+## Code Structure
+
+See [this document page](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/docs/code_structure.md)
+
 ## Dependent libraries
 
 * [Polymer](https://www.polymer-project.org/)
