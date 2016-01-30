@@ -43,6 +43,10 @@ This is a HTML file for the screen which users see at first when this software i
 
 ## JavaScript
 
+This software consists of some JavaScript files. The abstract structure is the following:
+
+<img src="https://raw.githubusercontent.com/yoichiro/chromeos-filesystem-dropbox/master/docs/code_structure.png">
+
 ### [/app/scripts/window.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/app/scripts/window.js)
 
 This window.js file is in charge of handling each click event fired on the window.html. For instance, there are the events below:
