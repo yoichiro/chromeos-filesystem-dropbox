@@ -3,15 +3,15 @@
   "name": "__MSG_appName__",
   "short_name": "__MSG_shortName__",
   "description": "__MSG_appDescription__",
-  "version": "1.1.8",
+  "version": "1.2.0",
   "default_locale": "en",
   "permissions": [
     "identity",
     "fileSystemProvider",
     "storage",
     "notifications",
-    "https://api.dropbox.com/",
-    "https://api-content.dropbox.com/"
+    "https://api.dropboxapi.com/",
+    "https://content.dropboxapi.com/"
   ],
   "app": {
     "background": {
