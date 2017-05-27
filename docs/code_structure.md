@@ -108,26 +108,26 @@ This script defines a DropboxFS class. The DropboxFS instance is created by the 
 
 ### [/app/scripts/dropbox_client.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/app/scripts/dropbox_client.js)
 
-This script provides an ability to communicate with Dropbox API server. That is, this script uses each Dropbox API to treat user's directories/files. For instance, [Dropbox Core API v1](https://www.dropbox.com/developers-v1/core/docs) is used.
+This script provides an ability to communicate with Dropbox API server. That is, this script uses each Dropbox API to treat user's directories/files. For instance, [Dropbox API v2](https://www.dropbox.com/developers/documentation/http/overview) is used.
 
 OAuth2 Implicit Grant flow is used to identify a user. But, this script doesn't use the Dropbox OAuth2 Implicit Grant flow directly. Instead, uses [chrome.identity](https://developer.chrome.com/extensions/identity) API.
 
 Basically, there are functions corresponding to each Dropbox API.
 
-* authorize() - [/oauth2/authorize](https://www.dropbox.com/developers-v1/core/docs#oa2-authorize)
-* unauthorize() - [/disable_access_token](https://www.dropbox.com/developers-v1/core/docs#disable-token)
-* getUserInfo() - [/account/info](https://www.dropbox.com/developers-v1/core/docs#account-info)
-* getMetadata() - [/metadata/auto/\<path>](https://www.dropbox.com/developers-v1/core/docs#metadata) [/thumbnails/auto/\<path>](https://www.dropbox.com/developers-v1/core/docs#thumbnails)
-* readDirectory() - [/metadata/auto/\<path>](https://www.dropbox.com/developers-v1/core/docs#metadata)
-* closeFile() - [/commit_chunked_upload/auto/\<path>](https://www.dropbox.com/developers-v1/core/docs#commit-chunked-upload)
-* readFile() - [/files/auto/\<path>](https://www.dropbox.com/developers-v1/core/docs#files-GET)
-* createDirectory() - [/fileops/create_folder](https://www.dropbox.com/developers-v1/core/docs#fileops-create-folder)
-* deleteEntry() - [/fileops/delete](https://www.dropbox.com/developers-v1/core/docs#fileops-delete)
-* moveEntry() - [/fileops/move](https://www.dropbox.com/developers-v1/core/docs#fileops-move)
-* copyEntry() - [/fileops/copy](https://www.dropbox.com/developers-v1/core/docs#fileops-copy)
-* createFile() - [/files_put/auto/\<path>](https://www.dropbox.com/developers-v1/core/docs#files_put)
-* writeFile() - [/commit_chunked_upload/auto/\<path>](https://www.dropbox.com/developers-v1/core/docs#commit-chunked-upload) [/chunked_upload](https://www.dropbox.com/developers-v1/core/docs#chunked-upload)
-* truncate() - [/files/auto/\<path>](https://www.dropbox.com/developers-v1/core/docs#files-GET) [/commit_chunked_upload/auto/\<path>](https://www.dropbox.com/developers-v1/core/docs#commit-chunked-upload) [/chunked_upload](https://www.dropbox.com/developers-v1/core/docs#chunked-upload)
+* authorize() - [/oauth2/authorize](https://www.dropbox.com/developers/documentation/http/documentation)
+* unauthorize() - [/token/revoke](https://www.dropbox.com/developers/documentation/http/documentation#auth-token-revoke)
+* getUserInfo() - [/users/get_current_account](https://www.dropbox.com/developers/documentation/http/documentation#users-get_current_account)
+* getMetadata() - [/files/get_metadata](https://www.dropbox.com/developers/documentation/http/documentation#files-get_metadata)
+* readDirectory() - [/files/list_folder](https://www.dropbox.com/developers/documentation/http/documentation#files-list_folder) [files/list_folder/continue](https://www.dropbox.com/developers/documentation/http/documentation#files-list_folder-continue)
+* closeFile() - [/files/upload_session/finish](https://www.dropbox.com/developers/documentation/http/documentation#files-upload_session-finish)
+* readFile() - [/files/download](https://www.dropbox.com/developers/documentation/http/documentation#files-download)
+* createDirectory() - [/files/create_folder](https://www.dropbox.com/developers/documentation/http/documentation#files-create_folder)
+* deleteEntry() - [/files/delete](https://www.dropbox.com/developers/documentation/http/documentation#files-delete)
+* moveEntry() - [/files/move](https://www.dropbox.com/developers/documentation/http/documentation#files-move)
+* copyEntry() - [/files/copy](https://www.dropbox.com/developers/documentation/http/documentation#files-copy)
+* createFile() - [/files/upload](https://www.dropbox.com/developers/documentation/http/documentation#files-upload)
+* writeFile() - [/files/upload_session/start](https://www.dropbox.com/developers/documentation/http/documentation#files-upload_session-start) [/files/upload_session/append_v2](https://www.dropbox.com/developers/documentation/http/documentation#files-upload_session-append_v2)
+* truncate() - [/files/upload_session/start](https://www.dropbox.com/developers/documentation/http/documentation#files-upload_session-start) [/files/upload_session/append_v2](https://www.dropbox.com/developers/documentation/http/documentation#files-upload_session-append_v2) [/files/upload_session/finish](https://www.dropbox.com/developers/documentation/http/documentation#files-upload_session-finish) 
 
 ### [/app/scripts/metadata_cache.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/app/scripts/metadata_cache.js)
 
