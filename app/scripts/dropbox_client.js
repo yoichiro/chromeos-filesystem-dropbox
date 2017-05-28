@@ -170,7 +170,7 @@
                     data: new ArrayBuffer(),
                     headers: {
                         "Authorization": "Bearer " + this.access_token_,
-                        "Dropbox-API-Arg": JSON.stringify({
+                        "Dropbox-API-Arg": jsonStringify.call(this, {
                             cursor: {
                                 session_id: uploadId,
                                 offset: writeRequest.offset
@@ -202,9 +202,7 @@
             url: "https://content.dropboxapi.com/2/files/download",
             headers: {
                 "Authorization": "Bearer " + this.access_token_,
-                "Dropbox-API-Arg": JSON.stringify({
-                    path: filePath
-                }),
+                "Dropbox-API-Arg": jsonStringify.call(this, {path: filePath}),
                 "Range": "bytes=" + offset + "-" + (offset + length - 1)
             },
             dataType: "binary",
@@ -238,7 +236,7 @@
             url: "https://content.dropboxapi.com/2/files/upload",
             headers: {
                 "Authorization": "Bearer " + this.access_token_,
-                "Dropbox-API-Arg": JSON.stringify({
+                "Dropbox-API-Arg": jsonStringify.call(this, {
                     path: filePath,
                     mode: "add"
                 }),
@@ -280,7 +278,7 @@
             url: "https://content.dropboxapi.com/2/files/download",
             headers: {
                 "Authorization": "Bearer " + this.access_token_,
-                "Dropbox-API-Arg": JSON.stringify({
+                "Dropbox-API-Arg": jsonStringify.call(this, {
                     path: filePath
                 }),
                 "Range": "bytes=0-"
@@ -336,7 +334,7 @@
             url: "https://content.dropboxapi.com/2/files/upload_session/start",
             headers: {
                 "Authorization": "Bearer " + this.access_token_,
-                "Dropbox-API-Arg": JSON.stringify({
+                "Dropbox-API-Arg": jsonStringify.call(this, {
                     close: false
                 }),
                 "Content-Type": "application/octet-stream"
@@ -363,7 +361,7 @@
                     headers: {
                         "Authorization": "Bearer " + this.access_token_,
                         "Content-Type": "application/octet-stream",
-                        "Dropbox-API-Arg": JSON.stringify({
+                        "Dropbox-API-Arg": jsonStringify.call(this, {
                             cursor: {
                                 session_id: options.uploadId,
                                 offset: options.offset
@@ -396,7 +394,7 @@
                 headers: {
                     "Authorization": "Bearer " + this.access_token_,
                     "Content-Type": "application/octet-stream",
-                    "Dropbox-API-Arg": JSON.stringify({
+                    "Dropbox-API-Arg": jsonStringify.call(this, {
                         cursor: {
                             session_id: options.uploadId,
                             offset: options.offset
@@ -612,6 +610,37 @@
         var names = path.split("/");
         var name = names[names.length - 1];
         return name;
+    };
+
+    var escapeUnicode = function (str) {
+        var result = str.replace(/\W/g, function(c) {
+            if (c === "/") {
+                return c;
+            } else {
+                return "\\u" + ("000" + c.charCodeAt(0).toString(16)).slice(-4);
+            }
+        });
+        return result.split("\"").join("\\\"");
+    };
+
+    var jsonStringify = function(obj) {
+        var json = "{";
+        var entries = [];
+        Object.keys(obj).map(function(key, index) {
+            var entry = "\"" + key + "\":";
+            var value = obj[key];
+            if (typeof value === "string") {
+                entry += "\"" + escapeUnicode.call(this, value).split("\"").join("\\\"") + "\"";
+            } else if (typeof value === "object") {
+                entry += jsonStringify.call(this, value);
+            } else if (typeof value === "boolean") {
+                entry += value ? "true" : "false";
+            } else if (typeof value === "number") {
+                entry += String(value);
+            }
+            entries.push(entry);
+        });
+        return json + entries.join(",") + "}";
     };
 
     // Export
