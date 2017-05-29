@@ -3,7 +3,7 @@
   "name": "__MSG_appName__",
   "short_name": "__MSG_shortName__",
   "description": "__MSG_appDescription__",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "default_locale": "en",
   "permissions": [
     "identity",
@@ -33,5 +33,5 @@
     "source": "network",
     "multiple_mounts": true
   },
-  "minimum_chrome_version": "42"
+  "minimum_chrome_version": "49"
 }
