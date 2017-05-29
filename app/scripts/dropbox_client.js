@@ -118,7 +118,7 @@
         this.uid_ = uid;
     };
 
-    DropboxClient.prototype.getMetadata = function(path, _needThumbnail, successCallback, errorCallback) {
+    DropboxClient.prototype.getMetadata = function(path, successCallback, errorCallback) {
         if (path === "/") {
             successCallback({
                 isDirectory: true,
@@ -135,7 +135,34 @@
                 size: result.size || 0,
                 modificationTime: result.server_modified ? new Date(result.server_modified) : new Date()
             };
-            successCallback(entryMetadata);
+            if (canFetchThumbnail.call(this, result)) {
+                $.ajax({
+                    type: "POST",
+                    url: "https://content.dropboxapi.com/2/files/get_thumbnail",
+                    headers: {
+                        "Authorization": "Bearer " + this.access_token_,
+                        "Dropbox-API-Arg": jsonStringify.call(this, {
+                            path: path,
+                            format: "jpeg",
+                            size: "w128h128"
+                        })
+                    },
+                    dataType: "binary",
+                    responseType: "arraybuffer"
+                }).done(function(image) {
+                    var fileReader = new FileReader();
+                    var blob = new Blob([image], {type: "image/jpeg"});
+                    fileReader.onload = function(e) {
+                        entryMetadata.thumbnail = e.target.result;
+                        successCallback(entryMetadata);
+                    };
+                    fileReader.readAsDataURL(blob);
+                }.bind(this)).fail(function(error) {
+                    handleError.call(this, error, successCallback, errorCallback);
+                }.bind(this));
+            } else {
+                successCallback(entryMetadata);
+            }
         }.bind(this)).fail(function(error) {
             handleError.call(this, error, successCallback, errorCallback);
         }.bind(this));
@@ -327,6 +354,13 @@
     };
 
     // Private functions
+
+    var canFetchThumbnail = function(metadata) {
+        var extPattern = /.\.(jpg|jpeg|png|tiff|tif|gif|bmp)$/i;
+        return metadata[".tag"] === "file" &&
+            metadata.size < 20971520 &&
+            extPattern.test(metadata.name);
+    };
 
     var startUploadSession = function(successCallback, errorCallback) {
         $.ajax({

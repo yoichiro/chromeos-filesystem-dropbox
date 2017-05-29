@@ -89,27 +89,22 @@
         dropboxClient.readDirectory(options.directoryPath, function(entryMetadataList) {
             var cache = getMetadataCache.call(this, options.fileSystemId);
             cache.put(options.directoryPath, entryMetadataList);
-            successCallback(entryMetadataList, false);
+            successCallback(entryMetadataList.map(function(e) {
+                return trimMetadata.call(this, options, e);
+            }.bind(this)), false);
         }.bind(this), errorCallback);
     };
 
     DropboxFS.prototype.onGetMetadataRequested = function(dropboxClient, options, successCallback, errorCallback) {
-        if (options.thumbnail) {
-            dropboxClient.getMetadata(
-                options.entryPath, true, function(entryMetadata) {
-                    successCallback(entryMetadata);
-                }.bind(this), errorCallback);
+        var metadataCache = getMetadataCache.call(this, options.fileSystemId);
+        var cache = metadataCache.get(options.entryPath);
+        if (cache.directoryExists && cache.fileExists && !options.thumbnail) {
+            successCallback(trimMetadata.call(this, options, cache.metadata));
         } else {
-            var metadataCache = getMetadataCache.call(this, options.fileSystemId);
-            var cache = metadataCache.get(options.entryPath);
-            if (cache.directoryExists && cache.fileExists) {
-                successCallback(cache.metadata);
-            } else {
-                dropboxClient.getMetadata(
-                    options.entryPath, false, function(entryMetadata) {
-                        successCallback(entryMetadata);
-                    }.bind(this), errorCallback);
-            }
+            dropboxClient.getMetadata(
+                options.entryPath, function(entryMetadata) {
+                    successCallback(trimMetadata.call(this, options, entryMetadata));
+                }.bind(this), errorCallback);
         }
     };
 
@@ -155,7 +150,7 @@
     DropboxFS.prototype.onCopyEntryRequested = function(dropboxClient, options, successCallback, errorCallback) {
         copyOrMoveEntry.call(this, "copyEntry", dropboxClient, options, successCallback, errorCallback);
     };
-    
+
     DropboxFS.prototype.onWriteFileRequested = function(dropboxClient, options, successCallback, errorCallback) {
         var filePath = getOpenedFiles.call(this, options.fileSystemId)[options.openRequestId];
         dropboxClient.writeFile(filePath, options.data, options.offset, options.openRequestId, function() {
@@ -180,7 +175,27 @@
     };
 
     // Private functions
-    
+
+    var trimMetadata = function(options, metadata) {
+        var result = {};
+        if (options.isDirectory) {
+            result.isDirectory = metadata.isDirectory;
+        }
+        if (options.name) {
+            result.name = metadata.name;
+        }
+        if (options.size) {
+            result.size = metadata.size;
+        }
+        if (options.modificationTime) {
+            result.modificationTime = metadata.modificationTime;
+        }
+        if (options.thumbnail) {
+            result.thumbnail = metadata.thumbnail;
+        }
+        return result;
+    };
+
     var copyOrMoveEntry = function(operation, dropboxClient, options, successCallback, errorCallback) {
         dropboxClient[operation](options.sourcePath, options.targetPath, function() {
             var metadataCache = getMetadataCache.call(this, options.fileSystemId);
@@ -189,7 +204,7 @@
             successCallback();
         }.bind(this), errorCallback);
     };
-    
+
     var createOrDeleteEntry = function(operation, path, dropboxClient, options, successCallback, errorCallback) {
         dropboxClient[operation](path, function() {
             var metadataCache = getMetadataCache.call(this, options.fileSystemId);
