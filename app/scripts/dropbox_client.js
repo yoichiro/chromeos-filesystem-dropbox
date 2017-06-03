@@ -280,23 +280,15 @@
     };
 
     DropboxClient.prototype.writeFile = function(filePath, data, offset, openRequestId, successCallback, errorCallback) {
-        startUploadSession.call(this, function (sessionId) {
-            var writeRequest = this.writeRequestMap[openRequestId];
-            if (writeRequest) {
+        var writeRequest = this.writeRequestMap[openRequestId];
+        if (writeRequest.uploadId) {
+            doWriteFile.call(this, filePath, data, offset, openRequestId, writeRequest, successCallback, errorCallback);
+        } else {
+            startUploadSession.call(this, function(sessionId) {
                 writeRequest.uploadId = sessionId;
-            }
-            var req = {
-                filePath: filePath,
-                data: data,
-                offset: offset,
-                sentBytes: 0,
-                uploadId: sessionId,
-                hasMore: true,
-                needCommit: false,
-                openRequestId: openRequestId
-            };
-            sendContents.call(this, req, successCallback, errorCallback);
-        }.bind(this), errorCallback);
+                doWriteFile.call(this, filePath, data, offset, openRequestId, writeRequest, successCallback, errorCallback);
+            }.bind(this), errorCallback);
+        }
     };
 
     DropboxClient.prototype.truncate = function(filePath, length, successCallback, errorCallback) {
@@ -354,6 +346,20 @@
     };
 
     // Private functions
+
+    var doWriteFile = function(filePath, data, offset, openRequestId, writeRequest, successCallback, errorCallback) {
+        var req = {
+            filePath: filePath,
+            data: data,
+            offset: offset,
+            sentBytes: 0,
+            uploadId: writeRequest.uploadId,
+            hasMore: true,
+            needCommit: false,
+            openRequestId: openRequestId
+        };
+        sendContents.call(this, req, successCallback, errorCallback);
+    };
 
     var canFetchThumbnail = function(metadata) {
         var extPattern = /.\.(jpg|jpeg|png|tiff|tif|gif|bmp)$/i;
