@@ -9,6 +9,7 @@
     "paper-dialog": "Polymer/paper-dialog#~0.5.4",
     "paper-radio-button": "Polymer/paper-radio-button#~0.5.4",
     "paper-radio-group": "Polymer/paper-radio-group#~0.5.4",
-    "core-toolbar": "Polymer/core-toolbar#~0.5.4"
+    "core-toolbar": "Polymer/core-toolbar#~0.5.4",
+    "raven-js": "^3.16.1"
   }
 }

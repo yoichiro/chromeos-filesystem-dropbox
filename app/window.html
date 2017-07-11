@@ -8,6 +8,7 @@
   <title data-message="mountHeader"></title>
 
   <script type="text/javascript" src="bower_components/jquery/dist/jquery.min.js"></script>
+  <script type="text/javascript" src="bower_components/raven-js/dist/raven.js"></script>
 
   <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
   <link rel="import" href="bower_components/paper-toast/paper-toast.html">
@@ -42,13 +43,13 @@
       <a  href="https://www.dropbox.com/account/security#apps" target="_blank">Dropbox linked applications list</a>
     </div>
   </div>
-  
+
   <div vertical layout>
     <core-toolbar>
       <paper-icon-button icon="settings" id="btnSettings"></paper-icon-button>
     </core-toolbar>
   </div>
-  
+
   <paper-action-dialog id="settingsDialog" heading="Settings"
       backdrop autoCloseDisabled layered="false" transition="core-transition-top">
     <form>
@@ -65,7 +66,7 @@
     </form>
   </paper-action-dialog>
 
-  
+
   <script type="text/javascript" src="scripts/window.js"></script>
 
 </body>

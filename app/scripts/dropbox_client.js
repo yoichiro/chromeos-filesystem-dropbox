@@ -106,7 +106,7 @@
                 displayName: result.name.display_name
             });
         }.bind(this)).fail(function(error) {
-            handleError.call(this, error, successCallback, errorCallback);
+            handleError.call(this, "getUserInfo", error, successCallback, errorCallback);
         }.bind(this));
     };
 
@@ -158,13 +158,13 @@
                     };
                     fileReader.readAsDataURL(blob);
                 }.bind(this)).fail(function(error) {
-                    handleError.call(this, error, successCallback, errorCallback);
+                    handleError.call(this, "getMetadata", error, successCallback, errorCallback);
                 }.bind(this));
             } else {
                 successCallback(entryMetadata);
             }
         }.bind(this)).fail(function(error) {
-            handleError.call(this, error, successCallback, errorCallback);
+            handleError.call(this, "getMetadata", error, successCallback, errorCallback);
         }.bind(this));
     };
 
@@ -175,7 +175,7 @@
                 continueReadDirectory.call(this, result, entries, successCallback, errorCallback);
             }.bind(this), errorCallback);
         }.bind(this)).fail(function(error) {
-            handleError.call(this, error, successCallback, errorCallback);
+            handleError.call(this, "readDirectory", error, successCallback, errorCallback);
         }.bind(this));
     };
 
@@ -213,7 +213,7 @@
                 }).done(function(result) {
                     successCallback();
                 }.bind(this)).fail(function(error) {
-                    handleError.call(this, error, successCallback, errorCallback);
+                    handleError.call(this, "closeFile", error, successCallback, errorCallback);
                 }.bind(this));
             } else {
                 successCallback();
@@ -237,7 +237,7 @@
         }).done(function(result) {
             successCallback(result, false);
         }.bind(this)).fail(function(error) {
-            handleError.call(this, error, successCallback, errorCallback);
+            handleError.call(this, "readFile", error, successCallback, errorCallback);
         }.bind(this));
     };
 
@@ -275,7 +275,7 @@
         }).done(function(result) {
             successCallback();
         }.bind(this)).fail(function(error) {
-            handleError.call(this, error, successCallback, errorCallback);
+            handleError.call(this, "createFile", error, successCallback, errorCallback);
         }.bind(this));
     };
 
@@ -341,7 +341,7 @@
                 }
             }.bind(this), errorCallback);
         }.bind(this)).fail(function(error) {
-            handleError.call(this, error, successCallback, errorCallback);
+            handleError.call(this, "truncate", error, successCallback, errorCallback);
         }.bind(this));
     };
 
@@ -387,7 +387,7 @@
             var sessionId = result.session_id;
             successCallback(sessionId);
         }.bind(this)).fail(function(error) {
-            handleError.call(this, error, successCallback, errorCallback);
+            handleError.call(this, "startUploadSession", error, successCallback, errorCallback);
         }.bind(this));
     };
 
@@ -416,7 +416,7 @@
                 }).done(function(result) {
                     successCallback();
                 }.bind(this)).fail(function(error) {
-                    handleError.call(this, error, successCallback, errorCallback);
+                    handleError.call(this, "sendContents(1)", error, successCallback, errorCallback);
                 }.bind(this));
             } else {
                 successCallback();
@@ -461,7 +461,7 @@
                 };
                 sendContents.call(this, req, successCallback, errorCallback);
             }.bind(this)).fail(function(error) {
-                handleError.call(this, error, successCallback, errorCallback);
+                handleError.call(this, "sendContents(2)", error, successCallback, errorCallback);
             }.bind(this));
         }
     };
@@ -482,7 +482,7 @@
         }).done(function(result) {
             successCallback();
         }.bind(this)).fail(function(error) {
-            handleError.call(this, error, successCallback, errorCallback);
+            handleError.call(this, "copyOrMoveEntry", error, successCallback, errorCallback);
         }.bind(this));
     };
 
@@ -542,7 +542,7 @@
                     continueReadDirectory.call(this, result, entries, successCallback, errorCallback);
                 }.bind(this), errorCallback);
             }.bind(this)).fail(function(error) {
-                handleError.call(this, error, successCallback, errorCallback);
+                handleError.call(this, "continueReadDirectory", error, successCallback, errorCallback);
             }.bind(this));
         } else {
             successCallback(entries);
@@ -564,18 +564,20 @@
         }).done(function(result) {
             successCallback();
         }.bind(this)).fail(function(error) {
-            handleError.call(this, error, successCallback, errorCallback);
+            handleError.call(this, "createOrDeleteEntry", error, successCallback, errorCallback);
         }.bind(this));
     };
 
-    var handleError = function(error, successCallback, errorCallback) {
-        console.error(error);
+    var handleError = function(caller, error, successCallback, errorCallback) {
         var status = Number(error.status);
         if (status === 404 || status === 409) {
+            console.debug(error);
             errorCallback("NOT_FOUND");
         } else if (status === 416) {
+            console.debug(error);
             successCallback(new ArrayBuffer(), false);
         } else if (status === 401) {
+            console.error(error);
             // Access token has already expired or unauthorized. Unmount.
             this.dropbox_fs_.doUnmount(function() {
                 errorCallback("INVALID_OPERATION");
@@ -583,6 +585,13 @@
             }.bind(this));
         } else {
             // showNotification.call(this, "Error: status=" + status);
+            console.error(error);
+            console.log(Raven.isSetup());
+            if (Raven.isSetup()) {
+                Raven.captureMessage(new Error("FAILED - " + caller + " - " + status), {
+                    extra: error
+                });
+            }
             errorCallback("FAILED");
         }
     };
