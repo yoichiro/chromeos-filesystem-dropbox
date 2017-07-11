@@ -3,10 +3,16 @@
 (function() {
 
     var onLoad = function() {
+        initializeSentry();
         assignEventHandlers();
         showSeasonImage();
     };
-    
+
+    var initializeSentry = function() {
+        Raven.config('https://8f30bd158dea44d2ad5dbce094b67274@sentry.io/189250').install();
+        console.log("Sentry initialized.");
+    };
+
     var showSeasonImage = function() {
         var today = new Date();
         var month = today.getMonth() + 1;

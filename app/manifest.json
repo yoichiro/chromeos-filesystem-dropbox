@@ -3,7 +3,7 @@
   "name": "__MSG_appName__",
   "short_name": "__MSG_shortName__",
   "description": "__MSG_appDescription__",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "default_locale": "en",
   "permissions": [
     "identity",
@@ -11,12 +11,14 @@
     "storage",
     "notifications",
     "https://api.dropboxapi.com/",
-    "https://content.dropboxapi.com/"
+    "https://content.dropboxapi.com/",
+    "https://8f30bd158dea44d2ad5dbce094b67274@sentry.io"
   ],
   "app": {
     "background": {
       "scripts": [
           "bower_components/jquery/dist/jquery.min.js",
+          "bower_components/raven-js/dist/raven.js",
           "scripts/metadata_cache.js",
           "scripts/dropbox_client.js",
           "scripts/dropbox_fs.js",

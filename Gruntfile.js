@@ -134,6 +134,7 @@ module.exports = function (grunt) {
             dist: {
                 src: [
                     '<%= config.app %>/bower_components/jquery/dist/jquery.min.js',
+                    '<%= config.app %>/bower_components/raven-js/dist/raven.js',
                     '<%= config.app %>/scripts/metadata_cache.js',
                     '<%= config.app %>/scripts/dropbox_client.js',
                     '<%= config.app %>/scripts/dropbox_fs.js',
