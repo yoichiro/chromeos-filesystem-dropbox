@@ -2,6 +2,11 @@
 
 (function() {
 
+    if (!chrome.fileSystemProvider) {
+        console.log("There is no chrome.fileSystemProvider API. See you on ChromeOS!");
+        return;
+    }
+
     Raven.config('https://8f30bd158dea44d2ad5dbce094b67274@sentry.io/189250').install();
     console.log("Sentry initialized.");
 
