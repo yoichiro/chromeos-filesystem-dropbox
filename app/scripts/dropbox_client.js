@@ -105,8 +105,8 @@
                 uid: result.account_id,
                 displayName: result.name.display_name
             });
-        }.bind(this)).fail(function(error) {
-            handleError.call(this, "getUserInfo", error, successCallback, errorCallback);
+        }.bind(this)).fail(function(error, textStatus, errorThrown) {
+            handleError.call(this, "getUserInfo", error, textStatus, errorThrown, {}, successCallback, errorCallback);
         }.bind(this));
     };
 
@@ -128,7 +128,8 @@
             });
             return;
         }
-        $.ajax(createFetchingMetadataObject.call(this, path)).done(function(result) {
+        var fetchingMetadataObject = createFetchingMetadataObject.call(this, path);
+        $.ajax(fetchingMetadataObject).done(function(result) {
             var entryMetadata = {
                 isDirectory: result[".tag"] === "folder",
                 name: result.name,
@@ -136,16 +137,17 @@
                 modificationTime: result.server_modified ? new Date(result.server_modified) : new Date()
             };
             if (canFetchThumbnail.call(this, result)) {
+                var data = jsonStringify.call(this, {
+                    path: path,
+                    format: "jpeg",
+                    size: "w128h128"
+                });
                 $.ajax({
                     type: "POST",
                     url: "https://content.dropboxapi.com/2/files/get_thumbnail",
                     headers: {
                         "Authorization": "Bearer " + this.access_token_,
-                        "Dropbox-API-Arg": jsonStringify.call(this, {
-                            path: path,
-                            format: "jpeg",
-                            size: "w128h128"
-                        })
+                        "Dropbox-API-Arg": data
                     },
                     dataType: "binary",
                     responseType: "arraybuffer"
@@ -157,25 +159,28 @@
                         successCallback(entryMetadata);
                     };
                     fileReader.readAsDataURL(blob);
-                }.bind(this)).fail(function(error) {
-                    handleError.call(this, "getMetadata", error, successCallback, errorCallback);
+                }.bind(this)).fail(function(error, textStatus, errorThrown) {
+                    handleError.call(this, "get_thumbnail", error, textStatus, errorThrown, data, successCallback, errorCallback);
                 }.bind(this));
             } else {
                 successCallback(entryMetadata);
             }
-        }.bind(this)).fail(function(error) {
-            handleError.call(this, "getMetadata", error, successCallback, errorCallback);
+        }.bind(this)).fail(function(error, textStatus, errorThrown) {
+            handleError.call(this, "getMetadata", error, textStatus, errorThrown,
+                fetchingMetadataObject.data, successCallback, errorCallback);
         }.bind(this));
     };
 
     DropboxClient.prototype.readDirectory = function(path, successCallback, errorCallback) {
-        $.ajax(createFetchingListFolderObject.call(this, path === "/" ? "" : path)).done(function(result) {
+        var fetchingListFolderObject = createFetchingListFolderObject.call(this, path === "/" ? "" : path);
+        $.ajax(fetchingListFolderObject).done(function(result) {
             var contents = result.entries;
             createEntryMetadatas.call(this, contents, 0, [], function(entries) {
                 continueReadDirectory.call(this, result, entries, successCallback, errorCallback);
             }.bind(this), errorCallback);
-        }.bind(this)).fail(function(error) {
-            handleError.call(this, "readDirectory", error, successCallback, errorCallback);
+        }.bind(this)).fail(function(error, textStatus, errorThrown) {
+            handleError.call(this, "readDirectory", error, textStatus, errorThrown,
+                fetchingListFolderObject.data, successCallback, errorCallback);
         }.bind(this));
     };
 
@@ -191,29 +196,30 @@
         if (writeRequest && writeRequest.mode === "WRITE") {
             var uploadId = writeRequest.uploadId;
             if (uploadId) {
+                var data = jsonStringify.call(this, {
+                    cursor: {
+                        session_id: uploadId,
+                        offset: writeRequest.offset
+                    },
+                    commit: {
+                        path: filePath,
+                        mode: "overwrite"
+                    }
+                });
                 $.ajax({
                     type: "POST",
                     url: "https://content.dropboxapi.com/2/files/upload_session/finish",
                     data: new ArrayBuffer(),
                     headers: {
                         "Authorization": "Bearer " + this.access_token_,
-                        "Dropbox-API-Arg": jsonStringify.call(this, {
-                            cursor: {
-                                session_id: uploadId,
-                                offset: writeRequest.offset
-                            },
-                            commit: {
-                                path: filePath,
-                                mode: "overwrite"
-                            }
-                        }),
+                        "Dropbox-API-Arg": data,
                         "Content-Type": "application/octet-stream"
                     },
                     dataType: "json"
                 }).done(function(result) {
                     successCallback();
-                }.bind(this)).fail(function(error) {
-                    handleError.call(this, "closeFile", error, successCallback, errorCallback);
+                }.bind(this)).fail(function(error, textStatus, errorThrown) {
+                    handleError.call(this, "closeFile", error, textStatus, errorThrown, data, successCallback, errorCallback);
                 }.bind(this));
             } else {
                 successCallback();
@@ -224,20 +230,25 @@
     };
 
     DropboxClient.prototype.readFile = function(filePath, offset, length, successCallback, errorCallback) {
+        var data = jsonStringify.call(this, {path: filePath});
+        var range = "bytes=" + offset + "-" + (offset + length - 1);
         $.ajax({
             type: "POST",
             url: "https://content.dropboxapi.com/2/files/download",
             headers: {
                 "Authorization": "Bearer " + this.access_token_,
-                "Dropbox-API-Arg": jsonStringify.call(this, {path: filePath}),
-                "Range": "bytes=" + offset + "-" + (offset + length - 1)
+                "Dropbox-API-Arg": data,
+                "Range": range
             },
             dataType: "binary",
             responseType: "arraybuffer"
         }).done(function(result) {
             successCallback(result, false);
-        }.bind(this)).fail(function(error) {
-            handleError.call(this, "readFile", error, successCallback, errorCallback);
+        }.bind(this)).fail(function(error, textStatus, errorThrown) {
+            handleError.call(this, "readFile", error, textStatus, errorThrown, {
+                data: data,
+                range: range
+            }, successCallback, errorCallback);
         }.bind(this));
     };
 
@@ -258,15 +269,16 @@
     };
 
     DropboxClient.prototype.createFile = function(filePath, successCallback, errorCallback) {
+        var data = jsonStringify.call(this, {
+            path: filePath,
+            mode: "add"
+        });
         $.ajax({
             type: "POST",
             url: "https://content.dropboxapi.com/2/files/upload",
             headers: {
                 "Authorization": "Bearer " + this.access_token_,
-                "Dropbox-API-Arg": jsonStringify.call(this, {
-                    path: filePath,
-                    mode: "add"
-                }),
+                "Dropbox-API-Arg": data,
                 "Content-Type": "application/octet-stream"
             },
             processData: false,
@@ -274,8 +286,8 @@
             dataType: "json"
         }).done(function(result) {
             successCallback();
-        }.bind(this)).fail(function(error) {
-            handleError.call(this, "createFile", error, successCallback, errorCallback);
+        }.bind(this)).fail(function(error, textStatus, errorThrown) {
+            handleError.call(this, "createFile", error, textStatus, errorThrown, data, successCallback, errorCallback);
         }.bind(this));
     };
 
@@ -292,14 +304,15 @@
     };
 
     DropboxClient.prototype.truncate = function(filePath, length, successCallback, errorCallback) {
+        var data = jsonStringify.call(this, {
+            path: filePath
+        });
         $.ajax({
             type: "POST",
             url: "https://content.dropboxapi.com/2/files/download",
             headers: {
                 "Authorization": "Bearer " + this.access_token_,
-                "Dropbox-API-Arg": jsonStringify.call(this, {
-                    path: filePath
-                }),
+                "Dropbox-API-Arg": data,
                 "Range": "bytes=0-"
             },
             dataType: "binary",
@@ -340,8 +353,8 @@
                     reader.readAsArrayBuffer(blob);
                 }
             }.bind(this), errorCallback);
-        }.bind(this)).fail(function(error) {
-            handleError.call(this, "truncate", error, successCallback, errorCallback);
+        }.bind(this)).fail(function(error, textStatus, errorThrown) {
+            handleError.call(this, "truncate", error, textStatus, errorThrown, data, successCallback, errorCallback);
         }.bind(this));
     };
 
@@ -369,14 +382,15 @@
     };
 
     var startUploadSession = function(successCallback, errorCallback) {
+        var data = jsonStringify.call(this, {
+            close: false
+        });
         $.ajax({
             type: "POST",
             url: "https://content.dropboxapi.com/2/files/upload_session/start",
             headers: {
                 "Authorization": "Bearer " + this.access_token_,
-                "Dropbox-API-Arg": jsonStringify.call(this, {
-                    close: false
-                }),
+                "Dropbox-API-Arg": data,
                 "Content-Type": "application/octet-stream"
             },
             processData: false,
@@ -386,14 +400,24 @@
             console.log(result);
             var sessionId = result.session_id;
             successCallback(sessionId);
-        }.bind(this)).fail(function(error) {
-            handleError.call(this, "startUploadSession", error, successCallback, errorCallback);
+        }.bind(this)).fail(function(error, textStatus, errorThrown) {
+            handleError.call(this, "startUploadSession", error, textStatus, errorThrown, data, successCallback, errorCallback);
         }.bind(this));
     };
 
     var sendContents = function(options, successCallback, errorCallback) {
         if (!options.hasMore) {
             if (options.needCommit) {
+                var data1 = jsonStringify.call(this, {
+                    cursor: {
+                        session_id: options.uploadId,
+                        offset: options.offset
+                    },
+                    commit: {
+                        path: options.filePath,
+                        mode: "overwrite"
+                    }
+                });
                 $.ajax({
                     type: "POST",
                     url: "https://content.dropboxapi.com/2/files/upload_session/finish",
@@ -401,22 +425,13 @@
                     headers: {
                         "Authorization": "Bearer " + this.access_token_,
                         "Content-Type": "application/octet-stream",
-                        "Dropbox-API-Arg": jsonStringify.call(this, {
-                            cursor: {
-                                session_id: options.uploadId,
-                                offset: options.offset
-                            },
-                            commit: {
-                                path: options.filePath,
-                                mode: "overwrite"
-                            }
-                        })
+                        "Dropbox-API-Arg": data1
                     },
                     dataType: "json"
                 }).done(function(result) {
                     successCallback();
-                }.bind(this)).fail(function(error) {
-                    handleError.call(this, "sendContents(1)", error, successCallback, errorCallback);
+                }.bind(this)).fail(function(error, textStatus, errorThrown) {
+                    handleError.call(this, "sendContents(1)", error, textStatus, errorThrown, data1, successCallback, errorCallback);
                 }.bind(this));
             } else {
                 successCallback();
@@ -427,6 +442,13 @@
             var sendLength = Math.min(CHUNK_SIZE, remains);
             var more = (options.sentBytes + sendLength) < len;
             var sendBuffer = options.data.slice(options.sentBytes, sendLength);
+            var data2 = jsonStringify.call(this, {
+                cursor: {
+                    session_id: options.uploadId,
+                    offset: options.offset
+                },
+                close: false
+            });
             $.ajax({
                 type: "POST",
                 url: "https://content.dropboxapi.com/2/files/upload_session/append_v2",
@@ -434,13 +456,7 @@
                 headers: {
                     "Authorization": "Bearer " + this.access_token_,
                     "Content-Type": "application/octet-stream",
-                    "Dropbox-API-Arg": jsonStringify.call(this, {
-                        cursor: {
-                            session_id: options.uploadId,
-                            offset: options.offset
-                        },
-                        close: false
-                    })
+                    "Dropbox-API-Arg": data2
                 },
                 processData: false,
                 data: sendBuffer
@@ -460,13 +476,17 @@
                     openRequestId: options.openRequestId
                 };
                 sendContents.call(this, req, successCallback, errorCallback);
-            }.bind(this)).fail(function(error) {
-                handleError.call(this, "sendContents(2)", error, successCallback, errorCallback);
+            }.bind(this)).fail(function(error, textStatus, errorThrown) {
+                handleError.call(this, "sendContents(2)", error, textStatus, errorThrown, data2, successCallback, errorCallback);
             }.bind(this));
         }
     };
 
     var copyOrMoveEntry = function(operation, sourcePath, targetPath, successCallback, errorCallback) {
+        var data = JSON.stringify({
+            from_path: sourcePath,
+            to_path: targetPath
+        });
         $.ajax({
             type: "POST",
             url: "https://api.dropboxapi.com/2/files/" + operation,
@@ -474,15 +494,12 @@
                 "Authorization": "Bearer " + this.access_token_,
                 "Content-Type": "application/json; charset=utf-8"
             },
-            data: JSON.stringify({
-                from_path: sourcePath,
-                to_path: targetPath
-            }),
+            data: data,
             dataType: "json"
         }).done(function(result) {
             successCallback();
-        }.bind(this)).fail(function(error) {
-            handleError.call(this, "copyOrMoveEntry", error, successCallback, errorCallback);
+        }.bind(this)).fail(function(error, textStatus, errorThrown) {
+            handleError.call(this, "copyOrMoveEntry", error, textStatus, errorThrown, data, successCallback, errorCallback);
         }.bind(this));
     };
 
@@ -536,13 +553,15 @@
 
     var continueReadDirectory = function(readDirectoryResult, entries, successCallback, errorCallback) {
         if (readDirectoryResult.has_more) {
-            $.ajax(createFetchingContinueListFolderObject.call(this, readDirectoryResult.cursor)).done(function(result) {
+            var fetchingContinueListFolderObject = createFetchingContinueListFolderObject.call(this, readDirectoryResult.cursor);
+            $.ajax(fetchingContinueListFolderObject).done(function(result) {
                 var contents = result.entries;
                 createEntryMetadatas.call(this, contents, 0, entries, function(entries) {
                     continueReadDirectory.call(this, result, entries, successCallback, errorCallback);
                 }.bind(this), errorCallback);
-            }.bind(this)).fail(function(error) {
-                handleError.call(this, "continueReadDirectory", error, successCallback, errorCallback);
+            }.bind(this)).fail(function(error, textStatus, errorThrown) {
+                handleError.call(this, "continueReadDirectory", error, textStatus, errorThrown,
+                    fetchingContinueListFolderObject.data, successCallback, errorCallback);
             }.bind(this));
         } else {
             successCallback(entries);
@@ -550,6 +569,9 @@
     }
 
     var createOrDeleteEntry = function(operation, path, successCallback, errorCallback) {
+        var data = JSON.stringify({
+            path: path
+        });
         $.ajax({
             type: "POST",
             url: "https://api.dropboxapi.com/2/files/" + operation,
@@ -557,18 +579,16 @@
                 "Authorization": "Bearer " + this.access_token_,
                 "Content-Type": "application/json; charset=utf-8"
             },
-            data: JSON.stringify({
-                path: path
-            }),
+            data: data,
             dataType: "json"
         }).done(function(result) {
             successCallback();
-        }.bind(this)).fail(function(error) {
-            handleError.call(this, "createOrDeleteEntry", error, successCallback, errorCallback);
+        }.bind(this)).fail(function(error, textStatus, errorThrown) {
+            handleError.call(this, "createOrDeleteEntry", error, textStatus, errorThrown, data, successCallback, errorCallback);
         }.bind(this));
     };
 
-    var handleError = function(caller, error, successCallback, errorCallback) {
+    var handleError = function(caller, error, textStatus, errorThrown, data, successCallback, errorCallback) {
         var status = Number(error.status);
         if (status === 404 || status === 409) {
             console.debug(error);
@@ -586,10 +606,18 @@
         } else {
             // showNotification.call(this, "Error: status=" + status);
             console.error(error);
-            console.log(Raven.isSetup());
             if (Raven.isSetup()) {
-                Raven.captureMessage(new Error("FAILED - " + caller + " - " + status), {
-                    extra: error
+                var message = caller + " - " + status;
+                if (error.responseText) {
+                    message += " - " + error.responseText;
+                }
+                Raven.captureMessage(new Error(message), {
+                    extra: {
+                        error: error,
+                        textStatus: textStatus,
+                        errorThrown: errorThrown,
+                        data: data
+                    }
                 });
             }
             errorCallback("FAILED");
