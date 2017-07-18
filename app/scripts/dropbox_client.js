@@ -92,22 +92,20 @@
     };
 
     DropboxClient.prototype.getUserInfo = function(successCallback, errorCallback) {
-        $.ajax({
+        new HttpFetcher(this, "getuserInfo", {
             type: "POST",
             url: "https://api.dropboxapi.com/2/users/get_current_account",
             headers: {
                 "Authorization": "Bearer " + this.access_token_
             },
             dataType: "json"
-        }).done(function(result) {
+        }, {}, function(result) {
             this.uid_ = result.account_id;
             successCallback({
                 uid: result.account_id,
                 displayName: result.name.display_name
             });
-        }.bind(this)).fail(function(error, textStatus, errorThrown) {
-            handleError.call(this, "getUserInfo", error, textStatus, errorThrown, {}, successCallback, errorCallback);
-        }.bind(this));
+        }.bind(this), errorCallback).fetch();
     };
 
     DropboxClient.prototype.getUid = function() {
@@ -129,7 +127,7 @@
             return;
         }
         var fetchingMetadataObject = createFetchingMetadataObject.call(this, path);
-        $.ajax(fetchingMetadataObject).done(function(result) {
+        new HttpFetcher(this, "getMetadata", fetchingMetadataObject, fetchingMetadataObject.data, function(result) {
             var entryMetadata = {
                 isDirectory: result[".tag"] === "folder",
                 name: result.name,
@@ -142,7 +140,7 @@
                     format: "jpeg",
                     size: "w128h128"
                 });
-                $.ajax({
+                new HttpFetcher(this, "get_thumbnail", {
                     type: "POST",
                     url: "https://content.dropboxapi.com/2/files/get_thumbnail",
                     headers: {
@@ -151,7 +149,7 @@
                     },
                     dataType: "binary",
                     responseType: "arraybuffer"
-                }).done(function(image) {
+                }, data, function(image) {
                     var fileReader = new FileReader();
                     var blob = new Blob([image], {type: "image/jpeg"});
                     fileReader.onload = function(e) {
@@ -159,29 +157,22 @@
                         successCallback(entryMetadata);
                     };
                     fileReader.readAsDataURL(blob);
-                }.bind(this)).fail(function(error, textStatus, errorThrown) {
-                    handleError.call(this, "get_thumbnail", error, textStatus, errorThrown, data, successCallback, errorCallback);
-                }.bind(this));
+                }.bind(this), errorCallback).fetch();
             } else {
                 successCallback(entryMetadata);
             }
-        }.bind(this)).fail(function(error, textStatus, errorThrown) {
-            handleError.call(this, "getMetadata", error, textStatus, errorThrown,
-                fetchingMetadataObject.data, successCallback, errorCallback);
-        }.bind(this));
+        }.bind(this), errorCallback).fetch();
     };
 
     DropboxClient.prototype.readDirectory = function(path, successCallback, errorCallback) {
         var fetchingListFolderObject = createFetchingListFolderObject.call(this, path === "/" ? "" : path);
-        $.ajax(fetchingListFolderObject).done(function(result) {
+        new HttpFetcher(this, "readDirectory", fetchingListFolderObject, fetchingListFolderObject.data, function(result) {
             var contents = result.entries;
             createEntryMetadatas.call(this, contents, 0, [], function(entries) {
                 continueReadDirectory.call(this, result, entries, successCallback, errorCallback);
             }.bind(this), errorCallback);
-        }.bind(this)).fail(function(error, textStatus, errorThrown) {
-            handleError.call(this, "readDirectory", error, textStatus, errorThrown,
-                fetchingListFolderObject.data, successCallback, errorCallback);
-        }.bind(this));
+        }.bind(this), errorCallback).fetch();
+
     };
 
     DropboxClient.prototype.openFile = function(filePath, requestId, mode, successCallback, errorCallback) {
@@ -206,7 +197,7 @@
                         mode: "overwrite"
                     }
                 });
-                $.ajax({
+                new HttpFetcher(this, "closeFile", {
                     type: "POST",
                     url: "https://content.dropboxapi.com/2/files/upload_session/finish",
                     data: new ArrayBuffer(),
@@ -216,11 +207,9 @@
                         "Content-Type": "application/octet-stream"
                     },
                     dataType: "json"
-                }).done(function(result) {
+                }, data, function(result) {
                     successCallback();
-                }.bind(this)).fail(function(error, textStatus, errorThrown) {
-                    handleError.call(this, "closeFile", error, textStatus, errorThrown, data, successCallback, errorCallback);
-                }.bind(this));
+                }.bind(this), errorCallback).fetch();
             } else {
                 successCallback();
             }
@@ -232,7 +221,7 @@
     DropboxClient.prototype.readFile = function(filePath, offset, length, successCallback, errorCallback) {
         var data = jsonStringify.call(this, {path: filePath});
         var range = "bytes=" + offset + "-" + (offset + length - 1);
-        $.ajax({
+        new HttpFetcher(this, "readFile", {
             type: "POST",
             url: "https://content.dropboxapi.com/2/files/download",
             headers: {
@@ -242,14 +231,12 @@
             },
             dataType: "binary",
             responseType: "arraybuffer"
-        }).done(function(result) {
+        }, {
+            data: data,
+            range: range
+        }, function(result) {
             successCallback(result, false);
-        }.bind(this)).fail(function(error, textStatus, errorThrown) {
-            handleError.call(this, "readFile", error, textStatus, errorThrown, {
-                data: data,
-                range: range
-            }, successCallback, errorCallback);
-        }.bind(this));
+        }.bind(this), errorCallback).fetch();
     };
 
     DropboxClient.prototype.createDirectory = function(directoryPath, successCallback, errorCallback) {
@@ -273,7 +260,7 @@
             path: filePath,
             mode: "add"
         });
-        $.ajax({
+        new HttpFetcher(this, "createFile", {
             type: "POST",
             url: "https://content.dropboxapi.com/2/files/upload",
             headers: {
@@ -284,11 +271,9 @@
             processData: false,
             data: new ArrayBuffer(),
             dataType: "json"
-        }).done(function(result) {
+        }, data, function(result) {
             successCallback();
-        }.bind(this)).fail(function(error, textStatus, errorThrown) {
-            handleError.call(this, "createFile", error, textStatus, errorThrown, data, successCallback, errorCallback);
-        }.bind(this));
+        }.bind(this), errorCallback).fetch();
     };
 
     DropboxClient.prototype.writeFile = function(filePath, data, offset, openRequestId, successCallback, errorCallback) {
@@ -307,7 +292,7 @@
         var data = jsonStringify.call(this, {
             path: filePath
         });
-        $.ajax({
+        new HttpFetcher(this, "truncate", {
             type: "POST",
             url: "https://content.dropboxapi.com/2/files/download",
             headers: {
@@ -317,7 +302,7 @@
             },
             dataType: "binary",
             responseType: "arraybuffer"
-        }).done(function(data) {
+        }, data, function(data) {
             startUploadSession.call(this, function(sessionId) {
                 if (length < data.byteLength) {
                     // Truncate
@@ -353,8 +338,12 @@
                     reader.readAsArrayBuffer(blob);
                 }
             }.bind(this), errorCallback);
-        }.bind(this)).fail(function(error, textStatus, errorThrown) {
-            handleError.call(this, "truncate", error, textStatus, errorThrown, data, successCallback, errorCallback);
+        }.bind(this), errorCallback).fetch();
+    };
+
+    DropboxClient.prototype.unmountByAccessTokenExpired = function() {
+        this.dropbox_fs_.doUnmount(function () {
+            showNotification.call(this, "The access token has been expired. File system unmounted.");
         }.bind(this));
     };
 
@@ -385,7 +374,7 @@
         var data = jsonStringify.call(this, {
             close: false
         });
-        $.ajax({
+        new HttpFetcher(this, "startUploadSession", {
             type: "POST",
             url: "https://content.dropboxapi.com/2/files/upload_session/start",
             headers: {
@@ -396,13 +385,11 @@
             processData: false,
             data: new ArrayBuffer(),
             dataType: "json"
-        }).done(function(result) {
+        }, data, function(result) {
             console.log(result);
             var sessionId = result.session_id;
             successCallback(sessionId);
-        }.bind(this)).fail(function(error, textStatus, errorThrown) {
-            handleError.call(this, "startUploadSession", error, textStatus, errorThrown, data, successCallback, errorCallback);
-        }.bind(this));
+        }.bind(this), errorCallback).fetch();
     };
 
     var sendContents = function(options, successCallback, errorCallback) {
@@ -418,7 +405,7 @@
                         mode: "overwrite"
                     }
                 });
-                $.ajax({
+                new HttpFetcher(this, "sendContents(1)", {
                     type: "POST",
                     url: "https://content.dropboxapi.com/2/files/upload_session/finish",
                     data: new ArrayBuffer(),
@@ -428,11 +415,9 @@
                         "Dropbox-API-Arg": data1
                     },
                     dataType: "json"
-                }).done(function(result) {
+                }, data1, function(result) {
                     successCallback();
-                }.bind(this)).fail(function(error, textStatus, errorThrown) {
-                    handleError.call(this, "sendContents(1)", error, textStatus, errorThrown, data1, successCallback, errorCallback);
-                }.bind(this));
+                }.bind(this), errorCallback).fetch();
             } else {
                 successCallback();
             }
@@ -449,7 +434,7 @@
                 },
                 close: false
             });
-            $.ajax({
+            new HttpFetcher(this, "sendContents(2)", {
                 type: "POST",
                 url: "https://content.dropboxapi.com/2/files/upload_session/append_v2",
                 dataType: "json",
@@ -460,7 +445,7 @@
                 },
                 processData: false,
                 data: sendBuffer
-            }).done(function(result) {
+            }, data2, function(result) {
                 var writeRequest = this.writeRequestMap[options.openRequestId];
                 if (writeRequest) {
                     writeRequest.offset = options.offset + sendLength;
@@ -476,9 +461,7 @@
                     openRequestId: options.openRequestId
                 };
                 sendContents.call(this, req, successCallback, errorCallback);
-            }.bind(this)).fail(function(error, textStatus, errorThrown) {
-                handleError.call(this, "sendContents(2)", error, textStatus, errorThrown, data2, successCallback, errorCallback);
-            }.bind(this));
+            }.bind(this), errorCallback).fetch();
         }
     };
 
@@ -487,7 +470,7 @@
             from_path: sourcePath,
             to_path: targetPath
         });
-        $.ajax({
+        new HttpFetcher(this, "copyOrMoveEntry", {
             type: "POST",
             url: "https://api.dropboxapi.com/2/files/" + operation,
             headers: {
@@ -496,11 +479,9 @@
             },
             data: data,
             dataType: "json"
-        }).done(function(result) {
+        }, data, function(result) {
             successCallback();
-        }.bind(this)).fail(function(error, textStatus, errorThrown) {
-            handleError.call(this, "copyOrMoveEntry", error, textStatus, errorThrown, data, successCallback, errorCallback);
-        }.bind(this));
+        }.bind(this), errorCallback).fetch();
     };
 
     var createFetchingMetadataObject = function(path) {
@@ -554,15 +535,13 @@
     var continueReadDirectory = function(readDirectoryResult, entries, successCallback, errorCallback) {
         if (readDirectoryResult.has_more) {
             var fetchingContinueListFolderObject = createFetchingContinueListFolderObject.call(this, readDirectoryResult.cursor);
-            $.ajax(fetchingContinueListFolderObject).done(function(result) {
+            var data = fetchingContinueListFolderObject.data;
+            new HttpFetcher(this, "continueReadDirectory", fetchingContinueListFolderObject, data, function(result) {
                 var contents = result.entries;
                 createEntryMetadatas.call(this, contents, 0, entries, function(entries) {
                     continueReadDirectory.call(this, result, entries, successCallback, errorCallback);
                 }.bind(this), errorCallback);
-            }.bind(this)).fail(function(error, textStatus, errorThrown) {
-                handleError.call(this, "continueReadDirectory", error, textStatus, errorThrown,
-                    fetchingContinueListFolderObject.data, successCallback, errorCallback);
-            }.bind(this));
+            }.bind(this), errorCallback).fetch();
         } else {
             successCallback(entries);
         }
@@ -572,7 +551,7 @@
         var data = JSON.stringify({
             path: path
         });
-        $.ajax({
+        new HttpFetcher(this, "createOrDeleteEntry", {
             type: "POST",
             url: "https://api.dropboxapi.com/2/files/" + operation,
             headers: {
@@ -581,47 +560,9 @@
             },
             data: data,
             dataType: "json"
-        }).done(function(result) {
+        }, data, function(result) {
             successCallback();
-        }.bind(this)).fail(function(error, textStatus, errorThrown) {
-            handleError.call(this, "createOrDeleteEntry", error, textStatus, errorThrown, data, successCallback, errorCallback);
-        }.bind(this));
-    };
-
-    var handleError = function(caller, error, textStatus, errorThrown, data, successCallback, errorCallback) {
-        var status = Number(error.status);
-        if (status === 404 || status === 409) {
-            console.debug(error);
-            errorCallback("NOT_FOUND");
-        } else if (status === 416) {
-            console.debug(error);
-            successCallback(new ArrayBuffer(), false);
-        } else if (status === 401) {
-            console.error(error);
-            // Access token has already expired or unauthorized. Unmount.
-            this.dropbox_fs_.doUnmount(function() {
-                errorCallback("INVALID_OPERATION");
-                showNotification.call(this, "The access token has been expired. File system unmounted.");
-            }.bind(this));
-        } else {
-            // showNotification.call(this, "Error: status=" + status);
-            console.error(error);
-            if (Raven.isSetup()) {
-                var message = caller + " - " + status;
-                if (error.responseText) {
-                    message += " - " + error.responseText;
-                }
-                Raven.captureMessage(new Error(message), {
-                    extra: {
-                        error: error,
-                        textStatus: textStatus,
-                        errorThrown: errorThrown,
-                        data: data
-                    }
-                });
-            }
-            errorCallback("FAILED");
-        }
+        }.bind(this), errorCallback).fetch();
     };
 
     var showNotification = function(message) {
