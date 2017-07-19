@@ -47,26 +47,38 @@
                 }.bind(this), retryAfter * 1000);
             } else {
                 console.error(error);
+                var message1 = this.caller_ + " - 429(no Retry-After)";
+                if (error.responseText) {
+                    message1 += " - " + error.responseText;
+                }
+                sendMessageToSentry.call(this, message1, error, textStatus, errorThrown);
                 this.errorCallback_("FAILED");
             }
         } else {
             // showNotification.call(this, "Error: status=" + status);
             console.error(error);
-            if (Raven.isSetup()) {
-                var message = this.caller_ + " - " + status;
-                if (error.responseText) {
-                    message += " - " + error.responseText;
-                }
-                Raven.captureMessage(new Error(message), {
-                    extra: {
-                        error: error,
-                        textStatus: textStatus,
-                        errorThrown: errorThrown,
-                        data: this.data_
-                    }
-                });
+            var message2 = this.caller_ + " - " + status;
+            if (error.responseText) {
+                message2 += " - " + error.responseText;
             }
+            sendMessageToSentry.call(this, message2, error, textStatus, errorThrown);
             this.errorCallback_("FAILED");
+        }
+    };
+
+    var sendMessageToSentry = function(message, error, textStatus, errorThrown) {
+        if (Raven.isSetup()) {
+            Raven.captureMessage(new Error(message), {
+                extra: {
+                    error: error,
+                    textStatus: textStatus,
+                    errorThrown: errorThrown,
+                    data: this.data_
+                },
+                tags: {
+                    "app.version": chrome.runtime.getManifest().version
+                }
+            });
         }
     };
 
