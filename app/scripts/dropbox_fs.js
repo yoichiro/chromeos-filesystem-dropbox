@@ -78,6 +78,10 @@
         }.bind(this));
     };
 
+    DropboxFS.prototype.unmount = function(dropboxClient, callback) {
+        doUnmount.call(this, dropboxClient, null, callback);
+    };
+
     DropboxFS.prototype.onUnmountRequested = function(options, successCallback, errorCallback) {
         console.log("onUnmountRequested");
         console.log(options);

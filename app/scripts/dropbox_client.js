@@ -342,7 +342,7 @@
     };
 
     DropboxClient.prototype.unmountByAccessTokenExpired = function() {
-        this.dropbox_fs_.doUnmount(function () {
+        this.dropbox_fs_.unmount(this, function () {
             showNotification.call(this, "The access token has been expired. File system unmounted.");
         }.bind(this));
     };
