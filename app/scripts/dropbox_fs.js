@@ -127,7 +127,11 @@
         getOpenedFiles.call(this, options.fileSystemId, function(openedFiles) {
             var filePath = openedFiles[options.openRequestId];
             dropboxClient.readFile(
-                filePath, options.offset, options.length, function(data, hasMore) {
+                filePath, options.offset, options.length, {
+                    openRequestId: options.openRequestId,
+                    openedFiles: openedFiles,
+                    filePath: filePath
+                }, function(data, hasMore) {
                     successCallback(data, hasMore);
                     console.log("onReadFileRequested - end");
                 }.bind(this), errorCallback);

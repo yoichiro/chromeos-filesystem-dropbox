@@ -58,6 +58,7 @@
     };
 
     MetadataCache.prototype.remove = function(entryPath) {
+        console.debug("entryPath: " + entryPath);
         for (var key in this.directories_) {
             if (key.indexOf(entryPath) === 0) {
                 delete this.directories_[key];
