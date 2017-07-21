@@ -218,7 +218,7 @@
         }
     };
 
-    DropboxClient.prototype.readFile = function(filePath, offset, length, successCallback, errorCallback) {
+    DropboxClient.prototype.readFile = function(filePath, offset, length, extra, successCallback, errorCallback) {
         var data = jsonStringify.call(this, {path: filePath});
         var range = "bytes=" + offset + "-" + (offset + length - 1);
         new HttpFetcher(this, "readFile", {
@@ -233,7 +233,8 @@
             responseType: "arraybuffer"
         }, {
             data: data,
-            range: range
+            range: range,
+            extra: extra
         }, function(result) {
             successCallback(result, false);
         }.bind(this), errorCallback).fetch();
