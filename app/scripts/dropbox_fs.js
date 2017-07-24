@@ -113,25 +113,13 @@
     };
 
     DropboxFS.prototype.onOpenFileRequested = function(dropboxClient, options, successCallback, errorCallback) {
-        dropboxClient.openFile(options.filePath, options.requestId, options.mode, function() {
-            getOpenedFiles.call(this, options.fileSystemId, function(openedFiles) {
-                openedFiles[options.requestId] = options.filePath;
-                updateOpenedFiles.call(this, options.fileSystemId, openedFiles, function() {
-                    successCallback();
-                }.bind(this));
-            }.bind(this));
-        }.bind(this), errorCallback);
+        dropboxClient.openFile(options.filePath, options.requestId, options.mode, successCallback, errorCallback);
     };
 
     DropboxFS.prototype.onReadFileRequested = function(dropboxClient, options, successCallback, errorCallback) {
-        getOpenedFiles.call(this, options.fileSystemId, function(openedFiles) {
-            var filePath = openedFiles[options.openRequestId];
+        getOpenedFile.call(this, options.fileSystemId, options.openRequestId, function(openedFile) {
             dropboxClient.readFile(
-                filePath, options.offset, options.length, {
-                    openRequestId: options.openRequestId,
-                    openedFiles: openedFiles,
-                    filePath: filePath
-                }, function(data, hasMore) {
+                openedFile.filePath, options.offset, options.length, function(data, hasMore) {
                     successCallback(data, hasMore);
                     console.log("onReadFileRequested - end");
                 }.bind(this), errorCallback);
@@ -139,14 +127,8 @@
     };
 
     DropboxFS.prototype.onCloseFileRequested = function(dropboxClient, options, successCallback, errorCallback) {
-        getOpenedFiles.call(this, options.fileSystemId, function(openedFiles) {
-            var filePath = openedFiles[options.openRequestId];
-            dropboxClient.closeFile(filePath, options.openRequestId, function() {
-                delete openedFiles[options.openRequestId];
-                updateOpenedFiles.call(this, options.fileSystemId, openedFiles, function() {
-                    successCallback();
-                }.bind(this));
-            }.bind(this), errorCallback);
+        getOpenedFile.call(this, options.fileSystemId, options.openRequestId, function(openedFile) {
+            dropboxClient.closeFile(openedFile.filePath, options.openRequestId, openedFile.mode, successCallback, errorCallback);
         }.bind(this));
     };
 
@@ -169,11 +151,10 @@
     };
 
     DropboxFS.prototype.onWriteFileRequested = function(dropboxClient, options, successCallback, errorCallback) {
-        getOpenedFiles.call(this, options.fileSystemId, function(openedFiles) {
-            var filePath = openedFiles[options.openRequestId];
-            dropboxClient.writeFile(filePath, options.data, options.offset, options.openRequestId, function() {
+        getOpenedFile.call(this, options.fileSystemId, options.openRequestId, function(openedFile) {
+            dropboxClient.writeFile(openedFile.filePath, options.data, options.offset, options.openRequestId, function() {
                 var metadataCache = getMetadataCache.call(this, options.fileSystemId);
-                metadataCache.remove(filePath);
+                metadataCache.remove(openedFile.filePath);
                 successCallback();
             }.bind(this), errorCallback);
         }.bind(this));
@@ -407,17 +388,21 @@
     };
 
     var getOpenedFiles = function(fileSystemId, callback) {
-        chrome.storage.local.get(fileSystemId, function(items) {
-            var openedFiles = items[fileSystemId] || {};
-            callback(openedFiles);
+        chrome.fileSystemProvider.get(fileSystemId, function(fileSystem) {
+            callback(fileSystem.openedFiles);
         }.bind(this));
     };
 
-    var updateOpenedFiles = function(fileSystemId, openedFiles, callback) {
-        var items = {};
-        items[fileSystemId] = openedFiles;
-        chrome.storage.local.set(items, function() {
-            callback();
+    var getOpenedFile = function(fileSystemId, openRequestId, callback) {
+        getOpenedFiles.call(this, fileSystemId, function(openedFiles) {
+            var openedFile = openedFiles.filter(function(x) {
+                return x.openRequestId === openRequestId;
+            });
+            if (openedFile.length >= 1) {
+                callback(openedFile[0]);
+            } else {
+                throw new Error("OpenedFile information not found. openRequestId=" + openRequestId);
+            }
         }.bind(this));
     };
 
