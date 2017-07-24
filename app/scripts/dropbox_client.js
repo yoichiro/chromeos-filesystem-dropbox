@@ -176,15 +176,13 @@
     };
 
     DropboxClient.prototype.openFile = function(filePath, requestId, mode, successCallback, errorCallback) {
-        this.writeRequestMap[requestId] = {
-            mode: mode
-        };
+        this.writeRequestMap[requestId] = {};
         successCallback();
     };
 
-    DropboxClient.prototype.closeFile = function(filePath, openRequestId, successCallback, errorCallback) {
+    DropboxClient.prototype.closeFile = function(filePath, openRequestId, mode, successCallback, errorCallback) {
         var writeRequest = this.writeRequestMap[openRequestId];
-        if (writeRequest && writeRequest.mode === "WRITE") {
+        if (writeRequest && mode === "WRITE") {
             var uploadId = writeRequest.uploadId;
             if (uploadId) {
                 var data = jsonStringify.call(this, {
@@ -218,7 +216,7 @@
         }
     };
 
-    DropboxClient.prototype.readFile = function(filePath, offset, length, extra, successCallback, errorCallback) {
+    DropboxClient.prototype.readFile = function(filePath, offset, length, successCallback, errorCallback) {
         var data = jsonStringify.call(this, {path: filePath});
         var range = "bytes=" + offset + "-" + (offset + length - 1);
         new HttpFetcher(this, "readFile", {
@@ -233,8 +231,7 @@
             responseType: "arraybuffer"
         }, {
             data: data,
-            range: range,
-            extra: extra
+            range: range
         }, function(result) {
             successCallback(result, false);
         }.bind(this), errorCallback).fetch();
