@@ -54,6 +54,11 @@
                 sendMessageToSentry.call(this, message1, error, textStatus, errorThrown);
                 this.errorCallback_("FAILED");
             }
+        } else if (status === 0) { // Maybe, timeout?
+            console.log("Retry to send request(" + this.caller_ + ") after 1s because of timeout");
+            setTimeout(function () {
+                this.fetch();
+            }.bind(this), 1000);
         } else {
             // showNotification.call(this, "Error: status=" + status);
             console.error(error);
