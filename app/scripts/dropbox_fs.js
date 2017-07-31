@@ -73,6 +73,9 @@
                 console.log("resume - end");
                 successCallback();
             } else {
+                sendMessageToSentry.call(this, "resume(): CREDENTIAL_NOT_FOUND", {
+                    fileSystemId: fileSystemId
+                });
                 errorCallback("CREDENTIAL_NOT_FOUND");
             }
         }.bind(this));
@@ -300,10 +303,17 @@
                                 this,
                                 credential.uid,
                                 function() {
+                                    sendMessageToSentry.call(this, "createEventHandler(): FAILED", {
+                                        fileSystemId: fileSystemId,
+                                        credential: credential
+                                    });
                                     errorCallback("FAILED");
                                 }.bind(this));
                         } else {
                             console.log("Credential for [" + fileSystemId + "] not found.");
+                            sendMessageToSentry.call(this, "createEventHandler(): Credential for [" + fileSystemId + "] not found", {
+                                fileSystemId: fileSystemId
+                            });
                             errorCallback("FAILED");
                         }
                     }.bind(this));
@@ -326,6 +336,9 @@
                         this.onUnmountRequested(options, successCallback, errorCallback);
                     }.bind(this), function(reason) {
                         console.log("resume failed: " + reason);
+                        sendMessageToSentry.call(this, "assignEventHandlers(): onUnmountRequested - FAILED", {
+                            reason: reason
+                        });
                         errorCallback("FAILED");
                     }.bind(this));
                 } else {
@@ -404,6 +417,17 @@
                 throw new Error("OpenedFile information not found. openRequestId=" + openRequestId);
             }
         }.bind(this));
+    };
+
+    var sendMessageToSentry = function(message, extra) {
+        if (Raven.isSetup()) {
+            Raven.captureMessage(new Error(message), {
+                extra: extra,
+                tags: {
+                    "app.version": chrome.runtime.getManifest().version
+                }
+            });
+        }
     };
 
     // Export
