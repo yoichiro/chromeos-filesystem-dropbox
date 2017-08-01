@@ -62,11 +62,13 @@
         } else {
             // showNotification.call(this, "Error: status=" + status);
             console.error(error);
-            var message2 = this.caller_ + " - " + status;
-            if (error.responseText) {
-                message2 += " - " + error.responseText;
+            if (status < 500 || 599 < status) {
+                var message2 = this.caller_ + " - " + status;
+                if (error.responseText) {
+                    message2 += " - " + error.responseText;
+                }
+                sendMessageToSentry.call(this, message2, error, textStatus, errorThrown);
             }
-            sendMessageToSentry.call(this, message2, error, textStatus, errorThrown);
             this.errorCallback_("FAILED");
         }
     };
