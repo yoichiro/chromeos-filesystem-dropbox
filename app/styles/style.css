@@ -6,38 +6,48 @@ body {
   font-family: Helvetica, Arial, sans-serif;
   font-size: 14px;
   line-height: 17px;
+  margin: 0;
+  padding: 0;
 }
 
-paper-button {
-  display: block;
-  margin: 15px auto 0 auto;
-  width: 100px;
-  font-size: 16px;
-  color: #4285f4;
+div.container-fluid {
+  padding: 0;
 }
 
-.main {
-  margin: 50px 10px 10px 10px;
-}
-
-.main a {
+.header {
   margin-top: 50px;
 }
 
-.main img {
-  margin-right: 15px;
+.icon {
+  text-align: right;
+}
+
+.main {
+  text-align: center;
+  margin-top: 30px;
+}
+
+.link {
+  text-align: right;
+  position: absolute;
+  bottom: 60px;
+  right: 10px;
 }
 
 .footer {
-  margin: 10px;
-}
-
-core-toolbar {
+  width: 100%;
   background-color: #2298f2;
+  height: 50px;
+  bottom: 0;
+  position: absolute;
 }
 
-core-toolbar paper-icon-button {
+.footer div {
   color: white;
+  font-size: 32px;
+  margin-top: 5px;
+  margin-left: 10px;
+  cursor: pointer;
 }
 
 img.season {

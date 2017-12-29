@@ -33,7 +33,7 @@
     var assignEventHandlers = function() {
         var btnMount = document.querySelector("#btnMount");
         btnMount.addEventListener("click", function(e) {
-            onClickedBtnMount();
+            onClickedBtnMount(e);
         });
        // Settings dialog
         var btnSettings = document.querySelector("#btnSettings");
@@ -44,32 +44,34 @@
         for (var i = 0; i < openedFilesLimits.length; i++) {
             var limit = document.querySelector("#openedFilesLimit" + openedFilesLimits[i]);
             /*jshint loopfunc: true */
-            limit.addEventListener("core-change", function(e) {
+            limit.addEventListener("click", function(e) {
                 onChangedOpenedFilesLimit(e);
             });
         }
     };
 
-    var onClickedBtnMount = function() {
+    var onClickedBtnMount = function(evt) {
         var btnMount = document.querySelector("#btnMount");
-        event.preventDefault();
+        evt.preventDefault();
         btnMount.setAttribute("disabled", "true");
-        document.getElementById("toast-mount-attempt").show();
+        $.toaster({message: chrome.i18n.getMessage("mountAttempt")});
         var request = {
             type: "mount"
         };
         chrome.runtime.sendMessage(request, function(response) {
-            if (response.success) {
-                document.getElementById("toast-mount-success").show();
+            if (response && response.success) {
+                $.toaster({message: chrome.i18n.getMessage("mountSuccess")});
                 window.setTimeout(function() {
                     window.close();
                 }, 2000);
             } else {
-                var toast = document.getElementById("toast-mount-fail");
-                if (response.error) {
-                    toast.setAttribute("text", response.error);
+                var msg = {title: chrome.i18n.getMessage("mountFail"), priority: "danger"};
+                if (response && response.error) {
+                    msg.message = response.error;
+                } else {
+                    msg.message = "Something wrong.";
                 }
-                toast.show();
+                $.toaster(msg);
                 btnMount.removeAttribute("disabled");
             }
         });
@@ -87,16 +89,9 @@
 
             var textNode = null;
             switch(element.tagName.toLowerCase()) {
-            case "paper-button":
+            case "button":
                 textNode = document.createTextNode(messageText);
                 element.appendChild(textNode);
-                break;
-            case "paper-input":
-            case "paper-dropdown":
-                element.setAttribute("label", messageText);
-                break;
-            case "paper-toast":
-                element.setAttribute("text", messageText);
                 break;
             case "h1":
             case "title":
@@ -111,15 +106,15 @@
         chrome.storage.local.get("settings", function(items) {
             var settings = items.settings || {};
             var openedFilesLimit = settings.openedFilesLimit || "10";
-            document.querySelector("#openedFilesLimit").selected = "openedFilesLimit" + openedFilesLimit;
-            document.querySelector("#settingsDialog").toggle();
+            document.querySelector("#openedFilesLimit" + openedFilesLimit).checked = true;
+            $("#settingsDialog").modal("show");
         });
     };
 
     var onChangedOpenedFilesLimit = function(evt) {
         chrome.storage.local.get("settings", function(items) {
             var settings = items.settings || {};
-            var selected = document.querySelector("#openedFilesLimit").selected;
+            var selected = evt.target.id;
             var value = selected.substring(16);
             settings.openedFilesLimit = value;
             chrome.storage.local.set({settings: settings}, function() {
