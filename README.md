@@ -25,7 +25,7 @@ $ grunt
 
 ## Dependent libraries
 
-* [Polymer](https://www.polymer-project.org/)
+* [Bootstrap](https://getbootstrap.com/)
 * [jQuery](http://jquery.com/)
 
 ## License
