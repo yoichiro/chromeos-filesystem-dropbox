@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/yoichiro/chromeos-filesystem-dropbox.svg?style=svg)](https://circleci.com/gh/yoichiro/chromeos-filesystem-dropbox)
+
 [![Code Climate](https://codeclimate.com/github/yoichiro/chromeos-filesystem-dropbox/badges/gpa.svg)](https://codeclimate.com/github/yoichiro/chromeos-filesystem-dropbox)
 
 # File System for Dropbox
