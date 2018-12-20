@@ -517,16 +517,16 @@
 
     var createFetchingContinueListFolderObject = function(cursor) {
         return {
-          type: "POST",
-          url: "https://api.dropboxapi.com/2/files/list_folder/continue",
-          headers: {
-              "Authorization": "Bearer " + this.access_token_,
-              "Content-Type": "application/json; charset=utf-8"
-          },
-          dataType: "json",
-          data: JSON.stringify({
-              cursor: cursor
-          })
+            type: "POST",
+            url: "https://api.dropboxapi.com/2/files/list_folder/continue",
+            headers: {
+                "Authorization": "Bearer " + this.access_token_,
+                "Content-Type": "application/json; charset=utf-8"
+            },
+            dataType: "json",
+            data: JSON.stringify({
+                cursor: cursor
+            })
         };
     };
 
@@ -543,7 +543,7 @@
         } else {
             successCallback(entries);
         }
-    }
+    };
 
     var createOrDeleteEntry = function(operation, path, successCallback, errorCallback) {
         var data = JSON.stringify({
