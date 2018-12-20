@@ -13,73 +13,6 @@ module.exports = function (grunt) {
 
     grunt.initConfig({
         config: config,
-        watch: {
-            js: {
-                files: ['<%= config.app %>/scripts/{,*/}*.js'],
-                tasks: ['jshint'],
-                options: {
-                    livereload: true
-                }
-            },
-            gruntfile: {
-                files: ['Gruntfile.js']
-            },
-            styles: {
-                files: ['<%= config.app %>/styles/{,*/}*.css'],
-                tasks: [],
-                options: {
-                    livereload: true
-                }
-            },
-            livereload: {
-                options: {
-                    livereload: '<%= connect.options.livereload %>'
-                },
-                files: [
-                    '.tmp/styles/{,*/}*.css',
-                    '<%= config.app %>/*.html',
-                    '<%= config.app %>/icons/{,*/}*.{png,jpg,jpeg,gif,webp,svg}',
-                    '<%= config.app %>/manifest.json',
-                    '<%= config.app %>/_locales/{,*/}*.json'
-                ]
-            }
-        },
-        connect: {
-            options: {
-                port: 9000,
-                livereload: 35729,
-                hostname: 'localhost',
-                open: true
-            },
-            server: {
-                options: {
-                    middleware: function(connect) {
-                        return [
-                            connect.static('.tmp'),
-                            connect().use('/bower_components', connect.static('./bower_components')),
-                            connect.static(config.app)
-                        ];
-                    }
-                }
-            },
-            chrome: {
-                options: {
-                    open: false,
-                    base: [
-                        '<%= config.app %>'
-                    ]
-                }
-            },
-            test: {
-                options: {
-                    open: false,
-                    base: [
-                        'test',
-                        '<%= config.app %>'
-                    ]
-                }
-            }
-        },
         clean: {
             server: '.tmp',
             chrome: '.tmp',
@@ -105,14 +38,6 @@ module.exports = function (grunt) {
                 '!<%= config.app %>/scripts/vendor/*',
                 'test/spec/{,*/}*.js'
             ]
-        },
-        mocha: {
-            all: {
-                options: {
-                    run: true,
-                    urls: ['http://localhost:<%= connect.options.port %>/index.html']
-                }
-            }
         },
         copy: {
             dist: {
@@ -200,25 +125,6 @@ module.exports = function (grunt) {
         }
     });
 
-    grunt.registerTask('debug', function (platform) {
-        var watch = grunt.config('watch');
-        platform = platform || 'chrome';
-        if (platform === 'server') {
-            watch.styles.tasks = ['newer:copy:styles'];
-            watch.styles.options.livereload = false;
-        }
-        grunt.config('watch', watch);
-        grunt.task.run([
-            'clean:' + platform,
-            'connect:' + platform,
-            'watch'
-        ]);
-    });
-
-    grunt.registerTask('test', [
-        'connect:test'
-    ]);
-
     grunt.registerTask('build', [
         'clean:dist',
         'bower:install',
@@ -231,7 +137,6 @@ module.exports = function (grunt) {
 
     grunt.registerTask('default', [
         'newer:jshint',
-        'test',
         'build'
     ]);
 
