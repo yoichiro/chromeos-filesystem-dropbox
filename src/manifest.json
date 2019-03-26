@@ -17,8 +17,8 @@
   "app": {
     "background": {
       "scripts": [
-          "bower_components/jquery/dist/jquery.min.js",
-          "bower_components/raven-js/dist/raven.js",
+          "node_modules/jquery/dist/jquery.min.js",
+          "node_modules/raven-js/dist/raven.js",
           "scripts/metadata_cache.js",
           "scripts/http_fetcher.js",
           "scripts/dropbox_client.js",

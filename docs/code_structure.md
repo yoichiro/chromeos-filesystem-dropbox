@@ -5,12 +5,11 @@ This document describes you code structure of this software. Mainly, I write dow
 # Directories
 
 * [/](https://github.com/yoichiro/chromeos-filesystem-dropbox) - Build files, Configuration files, and etc.
-* [/app](https://github.com/yoichiro/chromeos-filesystem-dropbox/tree/master/app) - This directory has one HTML file and the manifest.json file.
-* [/app/_locales/en](https://github.com/yoichiro/chromeos-filesystem-dropbox/tree/master/app/_locales/en) - There is one message resource file for English.
-* [/app/icons](https://github.com/yoichiro/chromeos-filesystem-dropbox/tree/master/app/icons) - This directory has some image files.
-* [/app/scripts](https://github.com/yoichiro/chromeos-filesystem-dropbox/tree/master/app/scripts) - There are some JavaScript files.
-* [/app/styles](https://github.com/yoichiro/chromeos-filesystem-dropbox/tree/master/app/styles) - There is one css style sheet definition file.
-* [/test](https://github.com/yoichiro/chromeos-filesystem-dropbox/tree/master/test) - Currently, all files are garbage...
+* [/src](https://github.com/yoichiro/chromeos-filesystem-dropbox/tree/master/src) - This directory has one HTML file and the manifest.json file.
+* [/src/_locales/en](https://github.com/yoichiro/chromeos-filesystem-dropbox/tree/master/src/_locales/en) - There is one message resource file for English.
+* [/src/icons](https://github.com/yoichiro/chromeos-filesystem-dropbox/tree/master/src/icons) - This directory has some image files.
+* [/src/scripts](https://github.com/yoichiro/chromeos-filesystem-dropbox/tree/master/src/scripts) - There are some JavaScript files.
+* [/src/styles](https://github.com/yoichiro/chromeos-filesystem-dropbox/tree/master/src/styles) - There is one css style sheet definition file.
 * [/docs](https://github.com/yoichiro/chromeos-filesystem-dropbox/tree/master/docs) - Currently, there is one image file which is referenced by the README.md file.
 
 At least, if you are a programmer, first you should enter the /app/scripts directory and see each JavaScript files to understand this app's behaviors.
@@ -19,27 +18,19 @@ At least, if you are a programmer, first you should enter the /app/scripts direc
 
 ## For Building
 
-### [/Gruntfile.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/Gruntfile.js)
+### [/gulpfile.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/gulpfile.js)
 
-This file defines all procedures to build this software with [grunt](http://gruntjs.com/).
+This file defines all procedures to build this software with [gulp](https://gulpjs.com/).
 
 ### [/package.json](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/package.json)
 
-The building procedures are using many sub tasks for the grunt. This file defines the used sub tasks.
-
-### [/bower.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/bower.js)
-
-This software is using [bower](http://bower.io/) to manage packages. This software is using [Polymer 0.5](https://www.polymer-project.org/0.5/), and this file defines each polymer components as depended packages.
-
-### [/.jshintrc](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/.jshintrc)
-
-[JSHint](http://jshint.com/) is a software to check the JavaScript Code as a static code analyzing. This file defines each check rule. That is, this file has many flags to turn on/off each checking process. JSHint is executed by the grunt tool automatically, because the Gruntfile.js has the task to execute the JSHint.
+This file defines npm project information, building script commands and dependencies.
 
 ## HTML
 
-### [/app/window.html](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/app/window.html)
+### [/src/window.html](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/src/window.html)
 
-This is a HTML file for the screen which users see at first when this software is launched. For instance, this HTML file has one button to start mounting the Dropbox storage. The click event is handled by the function defined in the /app/scripts/window.js file. This HTML elements consists of Polymer components.
+This is a HTML file for the screen which users see at first when this software is launched. For instance, this HTML file has one button to start mounting the Dropbox storage. The click event is handled by the function defined in the /src/scripts/window.js file.
 
 ## JavaScript
 
@@ -47,7 +38,7 @@ This software consists of some JavaScript files. The abstract structure is the f
 
 <img src="https://raw.githubusercontent.com/yoichiro/chromeos-filesystem-dropbox/master/docs/code_structure.png">
 
-### [/app/scripts/window.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/app/scripts/window.js)
+### [/src/scripts/window.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/src/scripts/window.js)
 
 This window.js file is in charge of handling each click event fired on the window.html. For instance, there are the events below:
 
@@ -75,20 +66,20 @@ When this event fired, the onChangedOpenedFilesLimit() function is called. In th
 
 If a current date is on December, this script shows you a special image.
 
-### [/app/scripts/background.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/app/scripts/background.js)
+### [/src/scripts/background.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/src/scripts/background.js)
 
-This is a background page script. Mainly, this script has a responsibility of launching the window when users want to mount the Dropbox. Also, this script has an ability to receive the message from the window.js script. When the message received, this script delegates the request of mounting the Dropbox to the [/app/scripts/dropbox_fs.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/app/scripts/dropbox_fs.js) script. Especially, this script has one DropboxFS instance.
+This is a background page script. Mainly, this script has a responsibility of launching the window when users want to mount the Dropbox. Also, this script has an ability to receive the message from the window.js script. When the message received, this script delegates the request of mounting the Dropbox to the [/src/scripts/dropbox_fs.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/src/scripts/dropbox_fs.js) script. Especially, this script has one DropboxFS instance.
 
 This script can know what users want to mount the Dropbox by handling [chrome.fileSystemProvider.onMountRequested](https://developer.chrome.com/extensions/fileSystemProvider#event-onMountRequested) event. When this event fired, this script opens the window.html.
 
-### [/app/scripts/dropbox_fs.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/app/scripts/dropbox_fs.js)
+### [/src/scripts/dropbox_fs.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/src/scripts/dropbox_fs.js)
 
 This script file is an implementation for [chrome.fileSystemProvider](https://developer.chrome.com/apps/fileSystemProvider) API. That is, this script has a responsibility of the following:
 
 * When this script receives the request of mounting/unmounting, do mounting.mounting with the chrome.fileSystemProvider.mount()/unmount() API.
 * Handling all events of the chrome.fileSystemProvider API. Each event has a name "on\***Requested", and this script has functions which has the same name of each event.
-* Caching fetched meta data. For instance, Each meta data fetched is stored into [/app/scripts/metadata_cache.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/app/scripts/metadata_cache.js). This script improves a performance using the cache mechanism.
-* This software has an ability to mount multiple accounts of Dropbox at the same time. Each connection is represented by DropboxClient class defined in [/app/scripts/dropbox_client.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/app/scripts/dropbox_client.js). This script manages multiple DropboxClient instances.
+* Caching fetched meta data. For instance, Each meta data fetched is stored into [/src/scripts/metadata_cache.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/src/scripts/metadata_cache.js). This script improves a performance using the cache mechanism.
+* This software has an ability to mount multiple accounts of Dropbox at the same time. Each connection is represented by DropboxClient class defined in [/src/scripts/dropbox_client.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/src/scripts/dropbox_client.js). This script manages multiple DropboxClient instances.
 
 This script defines a DropboxFS class. The DropboxFS instance is created by the background.js. This script never communicate to Dropbox API server. Instead, this script delegates them to the dropbox_client.js script. That is, this script has a responsibility of handling FSP events and proxying them to the dropbox_client.js script.
 
@@ -106,7 +97,7 @@ This script defines a DropboxFS class. The DropboxFS instance is created by the 
 * onTruncateRequested() - DropboxClient#truncate()
 * onCreateFileRequested() - DropboxClient#createFile()
 
-### [/app/scripts/dropbox_client.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/app/scripts/dropbox_client.js)
+### [/src/scripts/dropbox_client.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/src/scripts/dropbox_client.js)
 
 This script provides an ability to communicate with Dropbox API server. That is, this script uses each Dropbox API to treat user's directories/files. For instance, [Dropbox API v2](https://www.dropbox.com/developers/documentation/http/overview) is used.
 
@@ -129,7 +120,7 @@ Basically, there are functions corresponding to each Dropbox API.
 * writeFile() - [/files/upload_session/start](https://www.dropbox.com/developers/documentation/http/documentation#files-upload_session-start) [/files/upload_session/append_v2](https://www.dropbox.com/developers/documentation/http/documentation#files-upload_session-append_v2)
 * truncate() - [/files/upload_session/start](https://www.dropbox.com/developers/documentation/http/documentation#files-upload_session-start) [/files/upload_session/append_v2](https://www.dropbox.com/developers/documentation/http/documentation#files-upload_session-append_v2) [/files/upload_session/finish](https://www.dropbox.com/developers/documentation/http/documentation#files-upload_session-finish) 
 
-### [/app/scripts/metadata_cache.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/app/scripts/metadata_cache.js)
+### [/src/scripts/metadata_cache.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/src/scripts/metadata_cache.js)
 
 This script provides an ability to keep metadata objects. As the result, whole performance is increased because of reducing a network communication. Each metadata object is stored per each directory. That is, the cache key is a directory path.
 
@@ -139,6 +130,6 @@ This script provides an ability to keep metadata objects. As the result, whole p
 
 ## Other
 
-### [/app/manifest.json](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/app/manifest.json)
+### [/src/manifest.json](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/src/manifest.json)
 
 This is a manifest file which is needed for Chrome Apps.

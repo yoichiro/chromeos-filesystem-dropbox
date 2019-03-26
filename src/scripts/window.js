@@ -54,24 +54,33 @@
         var btnMount = document.querySelector("#btnMount");
         evt.preventDefault();
         btnMount.setAttribute("disabled", "true");
-        $.toaster({message: chrome.i18n.getMessage("mountAttempt")});
+        $.toast({
+            text: chrome.i18n.getMessage("mountAttempt"),
+            position: 'bottom-right'
+        });
         var request = {
             type: "mount"
         };
         chrome.runtime.sendMessage(request, function(response) {
             if (response && response.success) {
-                $.toaster({message: chrome.i18n.getMessage("mountSuccess")});
+                $.toast({
+                    text: chrome.i18n.getMessage("mountSuccess"),
+                    position: "bottom-right"
+                });
                 window.setTimeout(function() {
                     window.close();
                 }, 2000);
             } else {
-                var msg = {title: chrome.i18n.getMessage("mountFail"), priority: "danger"};
+                var texts = [chrome.i18n.getMessage("mountFail")];
                 if (response && response.error) {
-                    msg.message = response.error;
+                    texts.push(response.error);
                 } else {
-                    msg.message = "Something wrong.";
+                    texts.push("Something wrong.");
                 }
-                $.toaster(msg);
+                $.toast({
+                    text: texts.join(" "),
+                    position: "bottom-right"
+                });
                 btnMount.removeAttribute("disabled");
             }
         });
