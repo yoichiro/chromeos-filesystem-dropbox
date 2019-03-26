@@ -104,6 +104,7 @@
                 break;
             case "h1":
             case "title":
+            case "div":
                 textNode = document.createTextNode(messageText);
                 element.appendChild(textNode);
                 break;
