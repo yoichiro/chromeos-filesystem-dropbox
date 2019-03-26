@@ -18,6 +18,10 @@ div.container-fluid {
   margin-top: 50px;
 }
 
+.appname {
+  line-height: 2;
+}
+
 .icon {
   text-align: right;
 }

@@ -12,11 +12,11 @@
     "description": "Application description"
   },
   "mountHeader": {
-    "message": "Mount your Dropbox",
+    "message": "File system for Dropbox",
     "description": "Header describing the server mount form."
   },
   "mount": {
-    "message": "Mount",
+    "message": "Mount your Dropbox",
     "description": "Label for a button that triggers the mount action."
   },
   "mountAttempt": {
