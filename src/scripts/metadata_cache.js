@@ -16,6 +16,10 @@ class MetadataCache {
         this.directories_[directoryPath] = entries;
     }
 
+    dir(directoryPath) {
+        return this.directories_[directoryPath];
+    }
+
     get(entryPath) {
         if (entryPath === '/') {
             return {

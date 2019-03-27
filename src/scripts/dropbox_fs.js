@@ -12,6 +12,7 @@ class DropboxFS {
     constructor() {
         this.dropbox_client_map_ = {};
         this.metadata_cache_ = {};
+        this.watchers_ = {};
         this.assignEventHandlers();
     }
 
@@ -177,6 +178,28 @@ class DropboxFS {
             'createFile', options.filePath, dropboxClient, options, successCallback, errorCallback);
     }
 
+    onAddWatcherRequested(dropboxClient, options, successCallback, _errorCallback) {
+        const watchers = this.getWatchers(options.fileSystemId);
+        watchers.add(options.entryPath);
+        successCallback();
+    }
+
+    onRemoveWatcherRequested(dropboxClient, options, successCallback, _errorCallback) {
+        const watchers = this.getWatchers(options.fileSystemId);
+        watchers.delete(options.entryPath);
+        successCallback();
+    }
+
+    onAlarm(_alarm) {
+        for (let fileSystemId in this.watchers_) {
+            const dropboxClient = this.getDropboxClient(fileSystemId);
+            const watchers = this.watchers_[fileSystemId];
+            for (let watcher of watchers.values()) {
+                this.watchDirectory(fileSystemId, dropboxClient, watcher);
+            }
+        }
+    }
+
     // Private functions
 
     trimMetadata(options, metadata) {
@@ -233,6 +256,7 @@ class DropboxFS {
                 console.log(fileSystemId);
                 delete this.dropbox_client_map_[fileSystemId];
                 this.deleteMetadataCache(fileSystemId);
+                this.deleteWatchers(fileSystemId);
                 successCallback();
                 chrome.fileSystemProvider.unmount({
                     fileSystemId: fileSystemId
@@ -320,6 +344,15 @@ class DropboxFS {
 
     assignEventHandlers() {
         console.log('Start: assignEventHandlers');
+        chrome.alarms.onAlarm.addListener(alarm => {
+            if (alarm.name === 'dropbox_alarm') {
+                this.onAlarm(alarm);
+            }
+        });
+        chrome.alarms.create('dropbox_alarm', {
+            delayInMinutes: 1,
+            periodInMinutes: 1
+        });
         chrome.fileSystemProvider.onUnmountRequested.addListener(
             (options, successCallback, errorCallback) => { // Unmount immediately
                 console.log('onUnmountRequested', options);
@@ -351,7 +384,9 @@ class DropboxFS {
             'onCopyEntryRequested',
             'onWriteFileRequested',
             'onTruncateRequested',
-            'onCreateFileRequested'
+            'onCreateFileRequested',
+            'onAddWatcherRequested',
+            'onRemoveWatcherRequested'
         ];
         const caller = (self, funcName) => {
             return (options, successCallback, errorCallback) => {
@@ -422,6 +457,72 @@ class DropboxFS {
             });
         }
     };
+
+    getWatchers(fileSystemId) {
+        let watchers = this.watchers_[fileSystemId];
+        if (!watchers) {
+            watchers = new Set();
+            this.watchers_[fileSystemId] = watchers;
+        }
+        return watchers;
+    }
+
+    deleteWatchers(fileSystemId) {
+        delete this.watchers_[fileSystemId];
+    }
+
+    watchDirectory(fileSystemId, dropboxClient, entryPath) {
+        console.log('watchDirectory:', entryPath);
+        dropboxClient.readDirectory(entryPath, entries => {
+            const metadataCache = this.getMetadataCache(fileSystemId);
+            const currentList = entries;
+            const oldList = metadataCache.dir(entryPath) || {};
+            const nameSet = new Set();
+            for (let i = 0; i < currentList.length; i++) {
+                const current = currentList[i];
+                const old = oldList[current.name];
+                if (old) {
+                    // Changed
+                    if ((current.size !== old.size) ||
+                            (current.modificationTime.getTime() !== old.modificationTime.getTime())) {
+                        console.log('Changed:', current.name);
+                        this.notifyEntryChanged(fileSystemId, entryPath, 'CHANGED', current.name);
+                    }
+                } else {
+                    // Added
+                    console.log('Added:', current.name);
+                    this.notifyEntryChanged(fileSystemId, entryPath, 'CHANGED', current.name);
+                }
+                nameSet.add(current.name);
+            }
+            for (let oldName in oldList) {
+                if (!nameSet.has(oldName)) {
+                    // Deleted
+                    console.log('Deleted:', oldName);
+                    this.notifyEntryChanged(fileSystemId, entryPath, 'DELETED', oldName);
+                }
+            }
+            metadataCache.put(entryPath, currentList);
+        }, (reason) => {
+            console.log(reason);
+            this.sendMessageToSentry('watchDirectory(): ' + reason, {
+                fileSystemId: fileSystemId
+            });
+        });
+    }
+
+    notifyEntryChanged(fileSystemId, directoryPath, changeType, entryPath) {
+        console.log(`notifyEntryChanged: ${directoryPath} ${entryPath} ${changeType}`);
+        chrome.fileSystemProvider.notify({
+            fileSystemId: fileSystemId,
+            observedPath: directoryPath,
+            recursive: false,
+            changeType: 'CHANGED',
+            changes: [
+                {entryPath: entryPath, changeType: changeType}
+            ]
+        }, () => {});
+    }
 
 };
 
