@@ -1,0 +1,25 @@
+{
+  "extends": ["eslint:recommended"],
+  "plugins": [],
+  "parserOptions": {},
+  "env": {
+    "browser": true,
+    "es6": true
+  },
+  "globals": {
+    "$": false,
+    "Raven": false,
+    "chrome": false,
+    "DropboxClient": false,
+    "MetadataCache": false,
+    "DropboxFS": false,
+    "HttpFetcher": false
+  },
+  "rules": {
+    "no-console": "off",
+    "semi": "error",
+    "no-var": "error",
+    "no-unused-vars": ["error", {"argsIgnorePattern": "^_"}],
+    "quotes": ["error", "single"]
+  }
+}

@@ -1,21 +1,20 @@
-"use strict";
+'use strict';
 
-(function() {
-
+const background = () => {
     if (!chrome.fileSystemProvider) {
-        console.log("There is no chrome.fileSystemProvider API. See you on ChromeOS!");
+        console.log('There is no chrome.fileSystemProvider API. See you on ChromeOS!');
         return;
     }
 
     Raven.config('https://8f30bd158dea44d2ad5dbce094b67274@sentry.io/189250', {
         release: chrome.runtime.getManifest().version
     }).install();
-    console.log("Sentry initialized.");
+    console.log('Sentry initialized.');
 
-    var dropbox_fs_ = new DropboxFS();
+    const dropbox_fs_ = new DropboxFS();
 
-    var openWindow = function() {
-        chrome.app.window.create("window.html", {
+    const openWindow = () => {
+        chrome.app.window.create('window.html', {
             outerBounds: {
                 width: 600,
                 height: 350
@@ -30,45 +29,40 @@
         chrome.fileSystemProvider.onMountRequested.addListener(openWindow);
     }
 
-    var mount = function(successCallback, errorCallback) {
-        dropbox_fs_.mount(function() {
+    const mount = (successCallback, errorCallback) => {
+        dropbox_fs_.mount(() => {
             successCallback();
-        }, function(reason) {
+        }, reason => {
             errorCallback(reason);
         });
     };
 
-    chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         switch(request.type) {
-        case "mount":
-            mount(function() {
+        case 'mount':
+            mount(() => {
                 sendResponse({
-                    type: "mount",
+                    type: 'mount',
                     success: true
                 });
-            }, function(reason) {
+            }, reason => {
                 sendResponse({
-                    type: "mount",
+                    type: 'mount',
                     success: false,
                     error: reason
                 });
             });
             break;
         default:
-            var message;
-            if (request.type) {
-                message = "Invalid request type: " + request.type + ".";
-            } else {
-                message = "No request type provided.";
-            }
             sendResponse({
-                type: "error",
+                type: 'error',
                 success: false,
-                message: message
+                message: request.type ? 'Invalid request type: ' + request.type + '.' : 'No request type provided.'
             });
             break;
         }
         return true;
     });
+};
 
-})();
+background();

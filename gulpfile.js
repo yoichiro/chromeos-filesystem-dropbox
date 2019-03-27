@@ -1,6 +1,7 @@
 const gulp = require('gulp');
 const rm = require('rimraf');
 const zip = require('gulp-zip');
+const eslint = require('gulp-eslint');
 
 gulp.task('clean', done => {
   rm('./dist', done);
@@ -45,4 +46,13 @@ gulp.task('watch', () => {
   gulp.watch('./src/**/*', gulp.task('default'));
 });
 
-gulp.task('default', gulp.series('clean', 'copy-files', 'package'));
+gulp.task('lint', () => {
+  return gulp.src([
+    './src/scripts/*.js'
+  ]).pipe(eslint({
+    useEslintrc: true,
+    fix: true
+  })).pipe(eslint.format()).pipe(eslint.failAfterError());
+});
+
+gulp.task('default', gulp.series('clean', 'lint', 'copy-files', 'package'));

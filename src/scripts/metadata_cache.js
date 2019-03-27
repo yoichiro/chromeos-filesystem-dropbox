@@ -1,41 +1,41 @@
-"use strict";
+'use strict';
 
-(function() {
+class MetadataCache {
 
-    var MetadataCache = function() {
+    constructor() {
         this.directories_ = {};
-    };
+    }
 
-    MetadataCache.prototype.put = function(directoryPath, metadataList) {
+    put(directoryPath, metadataList) {
         delete this.directories_[directoryPath];
-        var entries = {};
-        for (var i = 0; i < metadataList.length; i++) {
-            var metadata = metadataList[i];
+        const entries = {};
+        for (let i = 0; i < metadataList.length; i++) {
+            const metadata = metadataList[i];
             entries[metadata.name] = metadata;
         }
         this.directories_[directoryPath] = entries;
-    };
+    }
 
-    MetadataCache.prototype.get = function(entryPath) {
-        if (entryPath === "/") {
+    get(entryPath) {
+        if (entryPath === '/') {
             return {
                 needFetch: true,
                 exists: true
             };
         } else {
-            var lastDelimiterPos = entryPath.lastIndexOf("/");
-            var directoryPath;
-            var name;
+            const lastDelimiterPos = entryPath.lastIndexOf('/');
+            let directoryPath;
+            let name;
             if (lastDelimiterPos === 0) {
-                directoryPath = "/";
+                directoryPath = '/';
                 name = entryPath.substring(1);
             } else {
                 directoryPath = entryPath.substring(0, lastDelimiterPos);
                 name = entryPath.substring(lastDelimiterPos + 1);
             }
-            var entries = this.directories_[directoryPath];
+            const entries = this.directories_[directoryPath];
             if (entries) {
-                var entry = entries[name];
+                const entry = entries[name];
                 if (entry) {
                     return {
                         directoryExists: true,
@@ -55,21 +55,21 @@
                 };
             }
         }
-    };
+    }
 
-    MetadataCache.prototype.remove = function(entryPath) {
-        console.debug("entryPath: " + entryPath);
-        for (var key in this.directories_) {
+    remove(entryPath) {
+        for (let key in this.directories_) {
             if (key.indexOf(entryPath) === 0) {
                 delete this.directories_[key];
             }
         }
-        var lastDelimiterPos = entryPath.lastIndexOf("/");
+        const lastDelimiterPos = entryPath.lastIndexOf('/');
         if (lastDelimiterPos !== 0) {
             delete this.directories_[entryPath.substring(0, lastDelimiterPos)];
         }
-    };
+    }
 
-    window.MetadataCache = MetadataCache;
+};
 
-})();
+// Export
+window.MetadataCache = MetadataCache;
