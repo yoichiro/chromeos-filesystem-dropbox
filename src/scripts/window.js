@@ -51,6 +51,12 @@ class MountWindow {
                 this.onChangedOpenedFilesLimit(e);
             });
         }
+        document.querySelector('#useWatcherOn').addEventListener('click', () => {
+            this.onChangedUseWatcher(true);
+        });
+        document.querySelector('#useWatcherOff').addEventListener('click', () => {
+            this.onChangedUseWatcher(false);
+        });
     }
 
     onClickedBtnMount(evt) {
@@ -119,7 +125,9 @@ class MountWindow {
         chrome.storage.local.get('settings', items => {
             const settings = items.settings || {};
             const openedFilesLimit = settings.openedFilesLimit || '10';
+            const useWatcher = settings.useWatcher || false;
             document.querySelector('#openedFilesLimit' + openedFilesLimit).checked = true;
+            document.querySelector('#useWatcher' + (useWatcher ? 'On' : 'Off')).checked = true;
             $('#settingsDialog').modal('show');
         });
     }
@@ -130,6 +138,16 @@ class MountWindow {
             const selected = evt.target.id;
             const value = selected.substring(16);
             settings.openedFilesLimit = value;
+            chrome.storage.local.set({settings: settings}, () => {
+                console.log('Saving settings done.');
+            });
+        });
+    }
+
+    onChangedUseWatcher(use) {
+        chrome.storage.local.get('settings', items => {
+            const settings = items.settings || {};
+            settings.useWatcher = use;
             chrome.storage.local.set({settings: settings}, () => {
                 console.log('Saving settings done.');
             });
