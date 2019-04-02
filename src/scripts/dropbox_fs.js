@@ -471,42 +471,57 @@ class DropboxFS {
         delete this.watchers_[fileSystemId];
     }
 
+    useWatcher(callback) {
+        chrome.storage.local.get('settings', items => {
+            const settings = items.settings || {};
+            callback(settings.useWatcher || false);
+        });
+    }
+
     watchDirectory(fileSystemId, dropboxClient, entryPath) {
-        console.log('watchDirectory:', entryPath);
-        dropboxClient.readDirectory(entryPath, entries => {
-            const metadataCache = this.getMetadataCache(fileSystemId);
-            const currentList = entries;
-            const oldList = metadataCache.dir(entryPath) || {};
-            const nameSet = new Set();
-            for (let i = 0; i < currentList.length; i++) {
-                const current = currentList[i];
-                const old = oldList[current.name];
-                if (old) {
-                    // Changed
-                    if ((current.size !== old.size) ||
-                            (current.modificationTime.getTime() !== old.modificationTime.getTime())) {
-                        console.log('Changed:', current.name);
+        this.useWatcher(use => {
+            if (!use) {
+                return;
+            }
+            console.log('watchDirectory:', entryPath);
+            dropboxClient.readDirectory(entryPath, entries => {
+                const metadataCache = this.getMetadataCache(fileSystemId);
+                const currentList = entries;
+                const oldList = metadataCache.dir(entryPath) || {};
+                const nameSet = new Set();
+                for (let i = 0; i < currentList.length; i++) {
+                    const current = currentList[i];
+                    const old = oldList[current.name];
+                    if (old) {
+                        // Changed
+                        const isBothDirectory = current.isDirectory && old.isDirectory;
+                        const isMatchType = current.isDirectory === old.isDirectory;
+                        const isMatchSize = current.size === old.size;
+                        const isMatchModificationTime = current.modificationTime.getTime() === old.modificationTime.getTime();
+                        if (!isBothDirectory && !(isMatchType && isMatchSize && isMatchModificationTime)) {
+                            console.log('Changed:', current.name);
+                            this.notifyEntryChanged(fileSystemId, entryPath, 'CHANGED', current.name);
+                        }
+                    } else {
+                        // Added
+                        console.log('Added:', current.name);
                         this.notifyEntryChanged(fileSystemId, entryPath, 'CHANGED', current.name);
                     }
-                } else {
-                    // Added
-                    console.log('Added:', current.name);
-                    this.notifyEntryChanged(fileSystemId, entryPath, 'CHANGED', current.name);
+                    nameSet.add(current.name);
                 }
-                nameSet.add(current.name);
-            }
-            for (let oldName in oldList) {
-                if (!nameSet.has(oldName)) {
-                    // Deleted
-                    console.log('Deleted:', oldName);
-                    this.notifyEntryChanged(fileSystemId, entryPath, 'DELETED', oldName);
+                for (let oldName in oldList) {
+                    if (!nameSet.has(oldName)) {
+                        // Deleted
+                        console.log('Deleted:', oldName);
+                        this.notifyEntryChanged(fileSystemId, entryPath, 'DELETED', oldName);
+                    }
                 }
-            }
-            metadataCache.put(entryPath, currentList);
-        }, (reason) => {
-            console.log(reason);
-            this.sendMessageToSentry('watchDirectory(): ' + reason, {
-                fileSystemId: fileSystemId
+                metadataCache.put(entryPath, currentList);
+            }, (reason) => {
+                console.log(reason);
+                this.sendMessageToSentry('watchDirectory(): ' + reason, {
+                    fileSystemId: fileSystemId
+                });
             });
         });
     }
