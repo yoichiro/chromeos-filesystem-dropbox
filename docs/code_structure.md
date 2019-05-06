@@ -4,7 +4,7 @@ This document describes you code structure of this software. Mainly, I write dow
 
 # Directories
 
-* [/](../) - Build files, Configuration files, and etc.
+* **/** - Build files, Configuration files, and etc.
 * [/src](../src) - This directory has one HTML file and the manifest.json file.
 * [/src/_locales/en](../src/_locales/en) - There is one message resource file for English.
 * [/src/icons](../src/icons) - This directory has some image files.
