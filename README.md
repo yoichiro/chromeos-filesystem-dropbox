@@ -10,11 +10,11 @@ File System for Dropbox provides you an ability to access to your Dropbox storag
   Go to File System for Dropbox page on Chrome WebStore
 </a>
 
-<img src="https://raw.githubusercontent.com/yoichiro/chromeos-filesystem-dropbox/master/docs/screenshot_2.png">
+<img src="./docs/screenshot_2.png">
 
 ## For Developers
 
-Please visit [Code Structure](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/docs/code_structure.md) document, if you want to know the detail of this software.
+Please visit [Code Structure](./docs/code_structure.md) document, if you want to know the detail of this software.
 
 ## How to build
 
