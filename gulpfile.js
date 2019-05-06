@@ -13,7 +13,7 @@ gulp.task('copy-src-files', () => {
     './src/styles/**/*.css',
     './src/icons/**/*.png',
     './src/_locales/**/*.json',
-    './src/window.html',
+    './src/windows/**/*.html',
     './src/manifest.json'
 ], {
     base: 'src'

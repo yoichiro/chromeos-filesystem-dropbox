@@ -4,7 +4,7 @@
   "name": "__MSG_appName__",
   "short_name": "__MSG_shortName__",
   "description": "__MSG_appDescription__",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "default_locale": "en",
   "permissions": [
     "identity",
@@ -12,6 +12,7 @@
     "storage",
     "notifications",
     "alarms",
+    "webview",
     "https://api.dropboxapi.com/",
     "https://content.dropboxapi.com/",
     "https://8f30bd158dea44d2ad5dbce094b67274@sentry.io"
@@ -23,6 +24,7 @@
           "node_modules/raven-js/dist/raven.js",
           "scripts/metadata_cache.js",
           "scripts/http_fetcher.js",
+          "scripts/auth_strategies.js",
           "scripts/dropbox_client.js",
           "scripts/dropbox_fs.js",
           "scripts/background.js"]

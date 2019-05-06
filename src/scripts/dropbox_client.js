@@ -1,9 +1,10 @@
 'use strict';
-
+const REDIRECT_URL = chrome.identity.getRedirectURL('');
 const AUTH_URL = 'https://www.dropbox.com/oauth2/authorize' +
     '?response_type=token&client_id=u4emlzpeiilp7n0' +
     '&force_reapprove=true' +
-    '&redirect_uri=' + chrome.identity.getRedirectURL('');
+    '&redirect_uri=' + REDIRECT_URL;
+
 
 const CHUNK_SIZE = 1024 * 1024 * 4; // 4MB
 
@@ -13,6 +14,7 @@ class DropboxClient {
 
     constructor(dropboxFS) {
         this.dropbox_fs_ = dropboxFS;
+        this.auth_strategy_ = new ChromeWebviewAuthStrategy(AUTH_URL, REDIRECT_URL);
         this.access_token_ = null;
         this.uid_ = null;
         this.writeRequestMap = {};
@@ -23,37 +25,10 @@ class DropboxClient {
 
     authorize(successCallback, errorCallback) {
         this.access_token_ = null;
-        chrome.identity.launchWebAuthFlow({
-            'url': AUTH_URL,
-            'interactive': true
-        }, redirectUrl => {
-            if (chrome.runtime.lastError) {
-                errorCallback(chrome.runtime.lastError.message);
-                return;
-            }
-            if (redirectUrl) {
-                const parametersStr = redirectUrl.substring(redirectUrl.indexOf('#') + 1);
-                const parameters = parametersStr.split('&');
-                for (let i = 0; i < parameters.length; i++) {
-                    const parameter = parameters[i];
-                    const kv = parameter.split('=');
-                    if (kv[0] === 'access_token') {
-                        this.access_token_ = kv[1];
-                    }
-                }
-                if (this.access_token_) {
-                    chrome.identity.removeCachedAuthToken({
-                        token: this.access_token_
-                    }, () => {
-                        successCallback();
-                    });
-                } else {
-                    errorCallback('Issuing Access token failed');
-                }
-            } else {
-                errorCallback('Authorization failed');
-            }
-        });
+        this.auth_strategy_.authorize(token => {
+            this.access_token_ = token;
+            successCallback();
+        }, errorCallback);
     }
 
     getAccessToken() {

@@ -28,9 +28,13 @@ This file defines npm project information, building script commands and dependen
 
 ## HTML
 
-### [/src/window.html](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/src/window.html)
+### [/src/windows/mount_window.html](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/src/windows/mount_window.html)
 
-This is a HTML file for the screen which users see at first when this software is launched. For instance, this HTML file has one button to start mounting the Dropbox storage. The click event is handled by the function defined in the /src/scripts/window.js file.
+This is a HTML file for the screen which users see at first when this software is launched. For instance, this HTML file has one button to start mounting the Dropbox storage. The click event is handled by the function defined in the /src/scripts/mount_window.js file.
+
+### [/src/windows/auth_window.html](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/src/windows/auth_window.html)
+
+This is an HTML file for the screen which shows users the Dropbox login page. It contains a `<webview>` which gets directed to the Dropbox auth URL. The script for this page is /src/scripts/auth_window.js. When Dropbox redirects back to the application, the redirect event is captured and the redirect URL is send in a message to /src/scripts/background.js.
 
 ## JavaScript
 
@@ -38,9 +42,9 @@ This software consists of some JavaScript files. The abstract structure is the f
 
 <img src="https://raw.githubusercontent.com/yoichiro/chromeos-filesystem-dropbox/master/docs/code_structure.png">
 
-### [/src/scripts/window.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/src/scripts/window.js)
+### [/src/scripts/mount_window.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/src/scripts/window.js)
 
-This window.js file is in charge of handling each click event fired on the window.html. For instance, there are the events below:
+This mount_window.js file is in charge of handling each click event fired on the window.html. For instance, there are the events below:
 
 * Mount button click event
 * Setting button click event
@@ -50,7 +54,7 @@ Each event handler is assigned by the assignEventHandlers() function.
 
 #### Mount button click event
 
-When this event fired, the onClickedBtnMount() function is called. The window.js file doesn't have any process to mount the Dropbox. Instead, this event handler delegates the actual process to the background page represented by the background.js file. For instance, the onClickedBtnMount() function sends a message to the background page. The message has one key/value pair: type:"mount".
+When this event fired, the onClickedBtnMount() function is called. The mount_window.js file doesn't have any process to mount the Dropbox. Instead, this event handler delegates the actual process to the background page represented by the background.js file. For instance, the onClickedBtnMount() function sends a message to the background page. The message has one key/value pair: type:"mount".
 
 After sending the message to the background page, the function waits a response. If the response has a success flag, the function closes the window.
 
@@ -66,9 +70,27 @@ When this event fired, the onChangedOpenedFilesLimit() function is called. In th
 
 If a current date is on December, this script shows you a special image.
 
+### [/src/scripts/auth_window.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/src/scripts/auth_window.js)
+
+This script handles the OAuth2 Implicit Grant flow in auth_window.html. The normal flow works as follows:
+
+1. The window is opened.
+2. The DOM is loaded, including a `<webview>` element. The webview has no `src` set yet.
+3. The DOMContentLoaded event handler is called.
+   1. It adds listeners for the `loadredirect` and `loadabort` events.
+   2. It sets the `src` attribute on the webview to the Dropbox login URL.
+4. The webview displays the Dropbox login page.
+5. The user logs in, going through whatever flow is needed.
+6. Dropbox redirects the user back to the app-supplied `redirectUrl` and includes the OAuth2 token.
+7. The `loadredirect` event handler is called.
+   1. The token is extracted from the redirect URL
+   2. The token is sent to `background.js` using `chrome.runtime.sendMessage`
+
+Also of note is the `loadabort` event handler. Within a webview, Chrome treats any page load aborted for any reason as an error. However, the `redirectUrl` never actually exists, and so will always result in a `loadabort`. Furthermore, subframes within the webview may generate spurious aborts. Therefore, the scripts suppresses all aborts and reports errors only for an abort at the top level of the webview that aren't for the redirect URL. Such aborts would likely indicate that some page of the login process could not be reached.
+ 
 ### [/src/scripts/background.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/src/scripts/background.js)
 
-This is a background page script. Mainly, this script has a responsibility of launching the window when users want to mount the Dropbox. Also, this script has an ability to receive the message from the window.js script. When the message received, this script delegates the request of mounting the Dropbox to the [/src/scripts/dropbox_fs.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/src/scripts/dropbox_fs.js) script. Especially, this script has one DropboxFS instance.
+This is a background page script. Mainly, this script has a responsibility of launching the window when users want to mount the Dropbox. Also, this script has an ability to receive the message from the mount_window.js script. When the message received, this script delegates the request of mounting the Dropbox to the [/src/scripts/dropbox_fs.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/src/scripts/dropbox_fs.js) script. Especially, this script has one DropboxFS instance.
 
 This script can know what users want to mount the Dropbox by handling [chrome.fileSystemProvider.onMountRequested](https://developer.chrome.com/extensions/fileSystemProvider#event-onMountRequested) event. When this event fired, this script opens the window.html.
 
@@ -101,7 +123,7 @@ This script defines a DropboxFS class. The DropboxFS instance is created by the 
 
 This script provides an ability to communicate with Dropbox API server. That is, this script uses each Dropbox API to treat user's directories/files. For instance, [Dropbox API v2](https://www.dropbox.com/developers/documentation/http/overview) is used.
 
-OAuth2 Implicit Grant flow is used to identify a user. But, this script doesn't use the Dropbox OAuth2 Implicit Grant flow directly. Instead, uses [chrome.identity](https://developer.chrome.com/extensions/identity) API.
+OAuth2 Implicit Grant flow is used to identify a user. The [chrome.identity](https://developer.chrome.com/extensions/identity) API doesn't seem to work with Dropbox's implicit grant flow (at least when 2FA is enabled). The dropbox_client.js only sends a message to /src/scripts/background.js to open /src/windows/auth_window.html, which handles much of the work.  
 
 Basically, there are functions corresponding to each Dropbox API.
 

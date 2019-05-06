@@ -14,7 +14,7 @@ const background = () => {
     const dropbox_fs_ = new DropboxFS();
 
     const openWindow = () => {
-        chrome.app.window.create('window.html', {
+        chrome.app.window.create('windows/mount_window.html', {
             outerBounds: {
                 width: 600,
                 height: 350
