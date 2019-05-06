@@ -1,6 +1,6 @@
 'use strict';
 
-function tokenFromRedirectUrl(urlWithToken, successCallback, errorCallback) {
+function _tokenFromRedirectUrl(urlWithToken, successCallback, errorCallback) {
     if (urlWithToken) {
         const urlObj = new URL(urlWithToken);
         const hash = urlObj.hash || '';
@@ -23,14 +23,14 @@ class ChromeWebviewAuthStrategy {
     }
 
     authorize(successCallback, errorCallback) {
-        this.openAuthWindow(redirectUrl => {
-            tokenFromRedirectUrl(redirectUrl, successCallback, errorCallback)
+        this._openAuthWindow(redirectUrl => {
+            _tokenFromRedirectUrl(redirectUrl, successCallback, errorCallback)
         }, reason => {
             errorCallback('Authorization failed: ' + reason);
         });
     }
 
-    openAuthWindow(successCallback, errorCallback) {
+    _openAuthWindow(successCallback, errorCallback) {
         chrome.app.window.create('windows/auth_window.html', {
             innerBounds: {
                 width: 600,
@@ -57,7 +57,7 @@ class ChromeIdentityAuthStrategy {
             'url': this.authUrl,
             'interactive': true
         }, redirectUrl => {
-            tokenFromRedirectUrl(redirectUrl, successCallback, errorCallback)
+            _tokenFromRedirectUrl(redirectUrl, successCallback, errorCallback)
         });
     }
 }
