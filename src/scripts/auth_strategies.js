@@ -61,3 +61,7 @@ class ChromeIdentityAuthStrategy {
         });
     }
 }
+
+// Export
+window.ChromeWebviewAuthStrategy = ChromeWebviewAuthStrategy;
+window.ChromeIdentityAuthStrategy = ChromeIdentityAuthStrategy;

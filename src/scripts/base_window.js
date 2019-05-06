@@ -31,3 +31,6 @@ class BaseWindow {
         }
     }
 }
+
+// Export
+window.BaseWindow = BaseWindow;

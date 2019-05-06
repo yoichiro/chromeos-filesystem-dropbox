@@ -13,7 +13,10 @@
     "DropboxClient": false,
     "MetadataCache": false,
     "DropboxFS": false,
-    "HttpFetcher": false
+    "HttpFetcher": false,
+    "BaseWindow": false,
+    "ChromeWebviewAuthStrategy": false,
+    "ChromeIdentityAuthStrategy": false
   },
   "rules": {
     "no-console": "off",
