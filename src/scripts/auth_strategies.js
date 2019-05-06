@@ -1,3 +1,5 @@
+'use strict';
+
 function tokenFromRedirectUrl(urlWithToken, successCallback, errorCallback) {
     if (urlWithToken) {
         const urlObj = new URL(urlWithToken);
@@ -44,7 +46,6 @@ class ChromeWebviewAuthStrategy {
         });
     };
 }
-
 
 class ChromeIdentityAuthStrategy {
     constructor(authUrl) {

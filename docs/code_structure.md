@@ -42,7 +42,11 @@ This software consists of some JavaScript files. The abstract structure is the f
 
 <img src="https://raw.githubusercontent.com/yoichiro/chromeos-filesystem-dropbox/master/docs/code_structure.png">
 
-### [/src/scripts/mount_window.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/src/scripts/window.js)
+### [/src/scripts/base_window.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/src/scripts/base_window.js)
+
+The base_window.js file contains a base class for the MountWindow and AuthWindow classes. The constructor for this class sets the text content of all elements with a message id in their `data-message` attribute to the corresponding message text.  
+
+### [/src/scripts/mount_window.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/src/scripts/mount_window.js)
 
 This mount_window.js file is in charge of handling each click event fired on the window.html. For instance, there are the events below:
 
@@ -74,20 +78,41 @@ If a current date is on December, this script shows you a special image.
 
 This script handles the OAuth2 Implicit Grant flow in auth_window.html. The normal flow works as follows:
 
-1. The window is opened.
+1. The background script opens the window with `chrome.app.window.create`.
 2. The DOM is loaded, including a `<webview>` element. The webview has no `src` set yet.
-3. The DOMContentLoaded event handler is called.
-   1. It adds listeners for the `loadredirect` and `loadabort` events.
-   2. It sets the `src` attribute on the webview to the Dropbox login URL.
-4. The webview displays the Dropbox login page.
-5. The user logs in, going through whatever flow is needed.
-6. Dropbox redirects the user back to the app-supplied `redirectUrl` and includes the OAuth2 token.
-7. The `loadredirect` event handler is called.
-   1. The token is extracted from the redirect URL
-   2. The token is sent to `background.js` using `chrome.runtime.sendMessage`
+3. The callback for `chrome.app.window.create` is called.
+4. The `load` event fires for the window.
+5. The webview displays the Dropbox login page.
+6. The goes through the login process, causing events to fire on the webview
+7. Dropbox redirects the user back to the app-supplied `redirectUrl` and includes the OAuth2 token.
+8. The `loadredirect` event fires for the webview.
 
-Also of note is the `loadabort` event handler. Within a webview, Chrome treats any page load aborted for any reason as an error. However, the `redirectUrl` never actually exists, and so will always result in a `loadabort`. Furthermore, subframes within the webview may generate spurious aborts. Therefore, the scripts suppresses all aborts and reports errors only for an abort at the top level of the webview that aren't for the redirect URL. Such aborts would likely indicate that some page of the login process could not be reached.
- 
+#### `chrome.app.window.create` callback
+
+This callback is responsible for passing the `authUrl`, `redirectUrl`, `successCallback`, and `errorCallback` from the background script to the auth window.
+
+#### Window load event 
+
+When this event is fired, the handler creates a new `AuthWindow` object and calls it's `onLoad` method.
+
+The `onLoad` method attaches event listeners to and sets the `src` attribute on the webview.
+
+#### Load redirect event
+
+When this event is fired, the onLoadRedirect() function is called. This function only pays attention to redirects at the top level of the webview. It stops the stall detection timer, then it checks if the target URL starts with `window.redirectUrl`. If so, then the user has finished logging in and Dropbox is redirecting back to the app. The redirectUrl is passed back to `window.successCallback` so that the token can be extracted, then all browsing data is cleared for the webview and the window is closed.
+
+#### Load abort event
+
+When this event is fired, the onLoadAbort() function is called. This function calls `event.preventDefault()` for every aborted load to suppress spurious application errors. If the abort happens at the top level then the functions starts the stall detection timer.
+
+#### Load start event
+
+When this event is fired, the onLoadStart() function is called. If the load is happening at the top level of the webview, then this function stops the stall detection timer.
+
+#### Stall detection timer
+
+There is no guaranteed way to detect that the login process has failed in the webview. Instead, a heuristic is used. If a load aborts within the webview at the top level and no new load is initiated within five seconds, it is assumed that the login has failed. In this case, an error is send back via `window.errorCallback`, the webview's browsing data is cleared, and the window closes.       
+
 ### [/src/scripts/background.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/src/scripts/background.js)
 
 This is a background page script. Mainly, this script has a responsibility of launching the window when users want to mount the Dropbox. Also, this script has an ability to receive the message from the mount_window.js script. When the message received, this script delegates the request of mounting the Dropbox to the [/src/scripts/dropbox_fs.js](https://github.com/yoichiro/chromeos-filesystem-dropbox/blob/master/src/scripts/dropbox_fs.js) script. Especially, this script has one DropboxFS instance.
