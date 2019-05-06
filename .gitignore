@@ -5,3 +5,7 @@ app/bower_components
 package
 package-lock.json
 *.log
+
+# IntelliJ Project Files
+.idea
+*.iml
