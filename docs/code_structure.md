@@ -148,7 +148,7 @@ This script defines a DropboxFS class. The DropboxFS instance is created by the 
 
 This script provides an ability to communicate with Dropbox API server. That is, this script uses each Dropbox API to treat user's directories/files. For instance, [Dropbox API v2](https://www.dropbox.com/developers/documentation/http/overview) is used.
 
-OAuth2 Implicit Grant flow is used to identify a user. The [chrome.identity](https://developer.chrome.com/extensions/identity) API doesn't seem to work with Dropbox's implicit grant flow (at least when 2FA is enabled). The dropbox_client.js only sends a message to /src/scripts/background.js to open /src/windows/auth_window.html, which handles much of the work.  
+OAuth2 Implicit Grant flow is used to identify a user. The work of starting the auth flow and obtaining the token is delegated to `ChromeWebviewAuthStrategy` in [/src/scripts/auth_strategies.js](../src/scripts/auth_strategies.js).  
 
 Basically, there are functions corresponding to each Dropbox API.
 
