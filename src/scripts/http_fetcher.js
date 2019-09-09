@@ -25,7 +25,7 @@ class HttpFetcher {
 
     // Private functions
 
-    handleError(error, textStatus, errorThrown) {
+    handleError(error, _textStatus, _errorThrown) {
         const status = Number(error.status);
         if (status === 404 || status === 409) {
             console.debug(error);
@@ -47,11 +47,6 @@ class HttpFetcher {
                 }, retryAfter * 1000);
             } else {
                 console.error(error);
-                let message1 = this.caller_ + ' - 429(no Retry-After)';
-                if (error.responseText) {
-                    message1 += ' - ' + error.responseText;
-                }
-                this.sendMessageToSentry(message1, error, textStatus, errorThrown);
                 this.errorCallback_('FAILED');
             }
         } else if (status === 0) { // Maybe, timeout?
@@ -62,30 +57,7 @@ class HttpFetcher {
         } else {
             // showNotification.call(this, 'Error: status=' + status);
             console.error(error);
-            if (status < 500 || 599 < status) {
-                let message2 = this.caller_ + ' - ' + status;
-                if (error.responseText) {
-                    message2 += ' - ' + error.responseText;
-                }
-                this.sendMessageToSentry(message2, error, textStatus, errorThrown);
-            }
             this.errorCallback_('FAILED');
-        }
-    }
-
-    sendMessageToSentry(message, error, textStatus, errorThrown) {
-        if (Raven.isSetup()) {
-            Raven.captureMessage(new Error(message), {
-                extra: {
-                    error: error,
-                    textStatus: textStatus,
-                    errorThrown: errorThrown,
-                    data: this.data_
-                },
-                tags: {
-                    'app.version': chrome.runtime.getManifest().version
-                }
-            });
         }
     }
 

@@ -74,9 +74,6 @@ class DropboxFS {
                 console.log('resume - end');
                 successCallback();
             } else {
-                this.sendMessageToSentry('resume(): CREDENTIAL_NOT_FOUND', {
-                    fileSystemId: fileSystemId
-                });
                 errorCallback('CREDENTIAL_NOT_FOUND');
             }
         });
@@ -321,17 +318,10 @@ class DropboxFS {
                             this._doUnmount(
                                 credential.uid,
                                 () => {
-                                    this.sendMessageToSentry('createEventHandler(): FAILED', {
-                                        fileSystemId: fileSystemId,
-                                        credential: credential
-                                    });
                                     errorCallback('FAILED');
                                 });
                         } else {
                             console.log('Credential for [' + fileSystemId + '] not found.');
-                            this.sendMessageToSentry('createEventHandler(): Credential for [' + fileSystemId + '] not found', {
-                                fileSystemId: fileSystemId
-                            });
                             errorCallback('FAILED');
                         }
                     });
@@ -363,9 +353,6 @@ class DropboxFS {
                         this.onUnmountRequested(options, successCallback, errorCallback);
                     }, reason => {
                         console.log('resume failed: ' + reason);
-                        this.sendMessageToSentry('assignEventHandlers(): onUnmountRequested - FAILED', {
-                            reason: reason
-                        });
                         errorCallback('FAILED');
                     });
                 } else {
@@ -447,17 +434,6 @@ class DropboxFS {
         });
     };
 
-    sendMessageToSentry(message, extra) {
-        if (Raven.isSetup()) {
-            Raven.captureMessage(new Error(message), {
-                extra: extra,
-                tags: {
-                    'app.version': chrome.runtime.getManifest().version
-                }
-            });
-        }
-    };
-
     getWatchers(fileSystemId) {
         let watchers = this.watchers_[fileSystemId];
         if (!watchers) {
@@ -519,9 +495,6 @@ class DropboxFS {
                 metadataCache.put(entryPath, currentList);
             }, (reason) => {
                 console.log(reason);
-                this.sendMessageToSentry('watchDirectory(): ' + reason, {
-                    fileSystemId: fileSystemId
-                });
             });
         });
     }
