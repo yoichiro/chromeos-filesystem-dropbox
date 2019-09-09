@@ -8,7 +8,6 @@
   },
   "globals": {
     "$": false,
-    "Raven": false,
     "chrome": false,
     "DropboxClient": false,
     "MetadataCache": false,

@@ -23,7 +23,6 @@ gulp.task('copy-src-files', () => {
 gulp.task('copy-dependent-files', () => {
   return gulp.src([
     './node_modules/jquery/dist/jquery.min.js',
-    './node_modules/raven-js/dist/raven.js',
     './node_modules/bootstrap/dist/js/bootstrap.js',
     './node_modules/jquery-toast-plugin/dist/jquery.toast.min.js',
     './node_modules/bootstrap/dist/css/bootstrap.css',

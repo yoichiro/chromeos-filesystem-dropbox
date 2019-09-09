@@ -6,11 +6,6 @@ const background = () => {
         return;
     }
 
-    Raven.config('https://8f30bd158dea44d2ad5dbce094b67274@sentry.io/189250', {
-        release: chrome.runtime.getManifest().version
-    }).install();
-    console.log('Sentry initialized.');
-
     const dropbox_fs_ = new DropboxFS();
 
     const openWindow = () => {
